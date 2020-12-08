@@ -3,7 +3,6 @@ from argparse import ArgumentParser
 from enum import Enum
 
 import pytorch_lightning as pl
-import torch.nn.functional as F
 from smart_compress.util.enum import ArgTypeMixin
 from torch.optim import SGD, Adam, AdamW
 
@@ -24,18 +23,32 @@ class BaseModule(pl.LightningModule):
             type=ArgType.argtype,
             choices=ArgType,
         )
+        parser.add_argument(
+            "--learning_rate",
+            type=float,
+            default=0.01,
+        )
+        parser.add_argument(
+            "--weight_decay",
+            type=float,
+            default=4e-5,
+        )
+        parser.add_argument(
+            "--momentum",
+            type=float,
+            default=0.9,
+        )
         return parser
 
-    def __init__(self, *args, optimizer_type=ArgType.SGD, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(BaseModule, self).__init__()
 
         self.save_hyperparameters()
 
     @abstractmethod
     def loss_function(self, outputs, ground_truth):
-        return F.cross_entropy(outputs, ground_truth)
+        raise Exception("Not implemented")
 
-    @abstractmethod
     def accuracy_function(self, outputs, ground_truth):
         _, predicted = outputs.topk(5, 1, largest=True, sorted=True)
         total = ground_truth.size(0)
@@ -50,14 +63,14 @@ class BaseModule(pl.LightningModule):
         if self.hparams.optimizer_type == ArgType.SGD:
             optimizer = SGD(
                 self.parameters(),
-                lr=self.learning_rate,
-                weight_decay=4e-5,
-                momentum=0.9,
+                lr=self.hparams.learning_rate,
+                weight_decay=self.hparams.weight_decay,
+                momentum=self.hparams.momentum,
             )
         elif self.hparams.optimizer_type == ArgType.ADAM:
-            optimizer = Adam(self.parameters(), lr=self.learning_rate)
+            optimizer = Adam(self.parameters(), lr=self.hparams.learning_rate)
         elif self.hparams.optimizer_type == ArgType.ADAMW:
-            optimizer = AdamW(self.parameters(), lr=self.learning_rate)
+            optimizer = AdamW(self.parameters(), lr=self.hparams.learning_rate)
         else:
             raise Exception("No optimizer")
 

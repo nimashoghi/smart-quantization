@@ -21,7 +21,7 @@ class ResNetModule(BaseModule):
             parents=[BaseModule.add_model_specific_args(parent_parser)], add_help=False
         )
         parser.add_argument(
-            "--model_type",
+            "--resnet_model",
             default=ModelType.resnet34,
             type=ModelType.argtype,
             choices=ModelType,
@@ -29,23 +29,23 @@ class ResNetModule(BaseModule):
         parser.add_argument("--output_size", default=10, type=int)
         return parser
 
-    def __init__(self, *args, output_size=10, model_type=ModelType.resnet34, **kwargs):
-        super(ResNetModule, self).__init__()
+    def __init__(self, *args, **kwargs):
+        super(ResNetModule, self).__init__(*args, **kwargs)
 
         self.save_hyperparameters()
 
-        if self.hparams.model_type == ModelType.resnet18:
+        if self.hparams.resnet_model == ModelType.resnet18:
             self.model = resnet18()
-        elif self.hparams.model_type == ModelType.resnet34:
+        elif self.hparams.resnet_model == ModelType.resnet34:
             self.model = resnet34()
-        elif self.hparams.model_type == ModelType.resnet50:
+        elif self.hparams.resnet_model == ModelType.resnet50:
             self.model = resnet50()
-        elif self.hparams.model_type == ModelType.resnet101:
+        elif self.hparams.resnet_model == ModelType.resnet101:
             self.model = resnet101()
-        elif self.hparams.model_type == ModelType.resnet152:
+        elif self.hparams.resnet_model == ModelType.resnet152:
             self.model = resnet152()
         else:
-            raise Exception("Invalid model type")
+            raise Exception(f"Invalid ResNet model type: {self.hparams.resnet_model}")
 
         modules = list(self.model.modules())
         modules[-1].out_features = self.hparams.output_size

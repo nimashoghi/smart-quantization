@@ -56,6 +56,12 @@ def init_model_from_args():
         help="dataset name",
         dest="dataset_type",
     )
+    parser.add_argument(
+        "--batch_size",
+        default=8,
+        type=int,
+        help="batch size",
+    )
     parser = Trainer.add_argparse_args(parser)
     args, _ = parser.parse_known_args()
 
