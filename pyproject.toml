@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "smart-compress"
+version = "0.1.0"
+description = ""
+authors = ["Nima Shoghi <nimashoghi@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pytorch-lightning = {version = "1.1.0rc1", extras = ["extra"]}
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
