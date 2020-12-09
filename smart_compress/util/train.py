@@ -1,9 +1,8 @@
-import string
 from argparse import ArgumentParser
 from enum import Enum
+from smart_compress.util.pytorch_hooks import register_global_hooks
 
 from pytorch_lightning import Trainer
-from pytorch_lightning.callbacks import ModelCheckpoint
 from smart_compress.util.enum import ArgTypeMixin
 
 
@@ -14,6 +13,16 @@ class DatasetType(ArgTypeMixin, Enum):
 
 class ModelType(ArgTypeMixin, Enum):
     ResNet = 0
+
+
+class CompressionType(ArgTypeMixin, Enum):
+    NoCompression = 0
+    FP8 = 1
+    SmartCompress = 2
+    S2FP8 = 3
+    FP16 = 4
+    BF16 = 5
+    FP32 = 6
 
 
 def _get_model(model_type: ModelType):
@@ -36,6 +45,24 @@ def _get_datamodule(dataset_type: DatasetType):
         return CIFAR100DataModule
     else:
         raise Exception(f"Datamodule {dataset_type} not found!")
+
+
+def _get_compression(compression_type: CompressionType):
+    if compression_type == CompressionType.FP8:
+        pass
+    elif compression_type == CompressionType.SmartCompress:
+        from smart_compress.compress.smart import (
+            add_args_smart_compress,
+            compress_smart_,
+        )
+
+        return compress_smart_, add_args_smart_compress
+    elif compression_type == CompressionType.S2FP8:
+        from smart_compress.compress.s2fp8 import compress_fp8_squeeze_
+
+        return compress_fp8_squeeze_, (lambda parent_parser: parent_parser)
+    else:
+        return (lambda x, _: x), (lambda parent_parser: parent_parser)
 
 
 def init_model_from_args():
@@ -62,18 +89,29 @@ def init_model_from_args():
         type=int,
         help="batch size",
     )
+    parser.add_argument(
+        "--compress",
+        default=CompressionType.NoCompression,
+        choices=CompressionType,
+        type=CompressionType.argtype,
+    )
     parser = Trainer.add_argparse_args(parser)
     args, _ = parser.parse_known_args()
 
     model_cls = _get_model(args.model_type)
     datamodule_cls = _get_datamodule(args.dataset_type)
+    compress_fn, add_args_fn = _get_compression(args.compress)
 
     parser = model_cls.add_model_specific_args(parser)
-    args = parser.parse_args()
+    parser = add_args_fn(parser)
 
+    args = parser.parse_args()
     trainer = Trainer.from_argparse_args(args)
 
     model = model_cls(**vars(args))
     data = datamodule_cls(model.hparams)
+
+    if args.compress and args.compress != CompressionType.NoCompression:
+        register_global_hooks(compress_fn)
 
     return model, trainer, data

@@ -7,6 +7,7 @@ authors = ["Nima Shoghi <nimashoghi@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 pytorch-lightning = {version = "1.1.0rc1", extras = ["extra"]}
+qtorch = "^0.2.0"
 
 [tool.poetry.dev-dependencies]
 
