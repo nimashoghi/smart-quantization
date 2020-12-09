@@ -59,29 +59,41 @@ class BaseModule(pl.LightningModule):
         correct_5 = correct[:, :5].sum()
         correct_1 = correct[:, :1].sum()
 
-        return dict(correct=correct, correct_5=correct_5, correct_1=correct_1)
+        return dict(correct_5=correct_5, correct_1=correct_1)
 
     def configure_optimizers(self):
         if self.hparams.optimizer_type == ArgType.SGD:
             optimizer = SGD(
                 self.parameters(),
                 lr=self.hparams.learning_rate,
-                weight_decay=self.hparams.weight_decay,
                 momentum=self.hparams.momentum,
+                weight_decay=self.hparams.weight_decay,
             )
         elif self.hparams.optimizer_type == ArgType.ADAM:
-            optimizer = Adam(self.parameters(), lr=self.hparams.learning_rate)
+            optimizer = Adam(
+                self.parameters(),
+                lr=self.hparams.learning_rate,
+                weight_decay=self.hparams.weight_decay,
+            )
         elif self.hparams.optimizer_type == ArgType.ADAMW:
-            optimizer = AdamW(self.parameters(), lr=self.hparams.learning_rate)
+            optimizer = AdamW(
+                self.parameters(),
+                lr=self.hparams.learning_rate,
+                weight_decay=self.hparams.weight_decay,
+            )
         else:
             raise Exception("No optimizer")
 
         if (
             self.hparams.compress
-            and self.hparams.compress_optimizer
+            and (
+                self.hparams.compress_weights
+                or self.hparams.compress_gradients
+                or self.hparams.compress_momentum_vectors
+            )
             and self.compress_fn is not None
         ):
-            optimizer = wrap_optimizer(optimizer, self.compress_fn)
+            optimizer = wrap_optimizer(optimizer, self.compress_fn, self.hparams)
 
         return optimizer
 

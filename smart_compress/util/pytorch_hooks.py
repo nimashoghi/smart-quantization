@@ -3,7 +3,7 @@ from typing import Tuple
 
 import torch
 import torch.nn as nn
-from qtorch.optim import OptimLP
+from smart_compress.util.pytorch_optimizer import OptimLP
 from smart_compress.util.quantization import check_layer_types
 from torch.nn.modules.module import register_module_forward_hook
 
