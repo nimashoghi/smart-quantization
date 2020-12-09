@@ -1,6 +1,8 @@
 from abc import abstractmethod
 from argparse import ArgumentParser
 from enum import Enum
+
+import torch
 from smart_compress.util.pytorch_hooks import wrap_optimizer
 
 import pytorch_lightning as pl
@@ -93,7 +95,11 @@ class BaseModule(pl.LightningModule):
             )
             and self.compress_fn is not None
         ):
-            optimizer = wrap_optimizer(optimizer, self.compress_fn, self.hparams)
+
+            def optimizer_compress(x: torch.Tensor):
+                return self.compress_fn(x, self.hparams)
+
+            optimizer = wrap_optimizer(optimizer, optimizer_compress, self.hparams)
 
         return optimizer
 

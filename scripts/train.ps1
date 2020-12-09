@@ -6,9 +6,12 @@ python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128
 python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128  --compress BF16 --name "bf16"
 
 
-python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128 --compress_weights --compress_gradients --compress_momentum_vectors --compress NoCompression --name "fp32-opt-compress"
-python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128 --compress_weights --compress_gradients --compress_momentum_vectors --compress SmartCompress --name "smart-opt-compress"
-python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128 --compress_weights --compress_gradients --compress_momentum_vectors --compress FP8 --name "fp8-opt-compress"
-python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128 --compress_weights --compress_gradients --compress_momentum_vectors --compress S2FP8 --name "s2fp8-opt-compress"
-python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128 --compress_weights --compress_gradients --compress_momentum_vectors --compress FP16 --name "fp16-opt-compress"
-python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128 --compress_weights --compress_gradients --compress_momentum_vectors --compress BF16 --name "bf16-opt-compress"
+python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128 --compress_weights --compress_gradients --compress_momentum_vectors --compress NoCompression --name "fp32-[weight,grad,momentum]"
+python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128 --compress_weights --compress_gradients --compress_momentum_vectors --compress SmartCompress --num_bits_main 6 --num_bits_outlier 8 --name "smart-[weight,grad,momentum]-[6-8]"
+python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128 --compress_weights --compress_gradients --compress_momentum_vectors --compress SmartCompress --num_bits_main 5 --num_bits_outlier 7 --name "smart-[weight,grad,momentum]-[5-7]"
+python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128 --compress_weights --compress_gradients --compress_momentum_vectors --compress SmartCompress --num_bits_main 4 --num_bits_outlier 6 --name "smart-[weight,grad,momentum]-[4-6]"
+python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128 --compress_weights --compress_gradients --compress_momentum_vectors --compress SmartCompress --num_bits_main 3 --num_bits_outlier 5 --name "smart-[weight,grad,momentum]-[3-5]"
+python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128 --compress_weights --compress_gradients --compress_momentum_vectors --compress FP8 --name "fp8-[weight,grad,momentum]"
+python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128 --compress_weights --compress_gradients --compress_momentum_vectors --compress S2FP8 --name "s2fp8-[weight,grad,momentum]"
+python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128 --compress_weights --compress_gradients --compress_momentum_vectors --compress FP16 --name "fp16-[weight,grad,momentum]"
+python ./train.py --accelerator ddp --gpus -1 --batch_size 8192 --max_epochs 128 --compress_weights --compress_gradients --compress_momentum_vectors --compress BF16 --name "bf16-[weight,grad,momentum]"

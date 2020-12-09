@@ -6,11 +6,6 @@ import torch
 def add_args_smart_compress(parent_parser: ArgumentParser):
     parser = ArgumentParser(parents=[parent_parser], add_help=False)
     parser.add_argument(
-        "--accumulate_stats",
-        action="store_true",
-        help="accumulate mean/std dev stats (so we're not constantly recalculating)",
-    )
-    parser.add_argument(
         "--num_samples",
         type=int,
         default=25,
@@ -29,19 +24,14 @@ def add_args_smart_compress(parent_parser: ArgumentParser):
     parser.add_argument(
         "--num_bits_main",
         type=int,
-        default=4,
+        default=6,
         help="number of bits for main data (within 1 std dev)",
     )
     parser.add_argument(
         "--num_bits_outlier",
         type=int,
-        default=6,
+        default=8,
         help="number of bits for outlier data (more than 1 std dev)",
-    )
-    parser.add_argument(
-        "--use_fp16_outlier",
-        action="store_true",
-        help="use fp16 for outliers (intead of quantization)",
     )
     parser.add_argument(
         "--main_std_dev_threshold",
@@ -60,7 +50,7 @@ def add_args_smart_compress(parent_parser: ArgumentParser):
 
 def _get_sample_mean_std(data: torch.Tensor, hparams: Namespace):
     numel = torch.tensor(data.numel(), dtype=torch.long)
-    sample_indices = torch.rand(torch.min(numel, hparams.n_samples)).mul(numel).long()
+    sample_indices = torch.rand(torch.min(numel, hparams.num_samples)).mul(numel).long()
     sample = data.view(-1)[sample_indices]
 
     return sample.mean(), sample.std(unbiased=False)
@@ -86,9 +76,9 @@ def compress_smart_(data: torch.Tensor, hparams: Namespace):
     )
     ranges = torch.where(
         is_outlier,
-        (2 ** (hparams.num_bits_outlier - 1))
+        ((2 ** (hparams.num_bits_outlier - 2)) - 1)  # -1 for tag, -1 for sign
         / (hparams.outlier_std_dev_threshold - hparams.main_std_dev_threshold),
-        (2 ** (hparams.num_bits_main - 1)) / hparams.main_std_dev_threshold,
+        ((2 ** (hparams.num_bits_main - 2)) - 1) / hparams.main_std_dev_threshold,
     )
     data.add_(scalars).mul_(ranges)
 
