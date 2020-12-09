@@ -95,6 +95,7 @@ def init_model_from_args():
         choices=CompressionType,
         type=CompressionType.argtype,
     )
+    parser.add_argument("--compress_optimizer", action="store_true")
     parser = Trainer.add_argparse_args(parser)
     args, _ = parser.parse_known_args()
 
@@ -108,7 +109,7 @@ def init_model_from_args():
     args = parser.parse_args()
     trainer = Trainer.from_argparse_args(args)
 
-    model = model_cls(**vars(args))
+    model = model_cls(compress_fn=compress_fn, **vars(args))
     data = datamodule_cls(model.hparams)
 
     if args.compress and args.compress != CompressionType.NoCompression:

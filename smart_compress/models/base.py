@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from argparse import ArgumentParser
 from enum import Enum
+from smart_compress.util.pytorch_hooks import wrap_optimizer
 
 import pytorch_lightning as pl
 from smart_compress.util.enum import ArgTypeMixin
@@ -40,9 +41,10 @@ class BaseModule(pl.LightningModule):
         )
         return parser
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, compress_fn=None, **kwargs):
         super(BaseModule, self).__init__()
 
+        self.compress_fn = compress_fn
         self.save_hyperparameters()
 
     @abstractmethod
@@ -73,6 +75,13 @@ class BaseModule(pl.LightningModule):
             optimizer = AdamW(self.parameters(), lr=self.hparams.learning_rate)
         else:
             raise Exception("No optimizer")
+
+        if (
+            self.hparams.compress
+            and self.hparams.compress_optimizer
+            and self.compress_fn is not None
+        ):
+            optimizer = wrap_optimizer(optimizer, self.compress_fn)
 
         return optimizer
 
