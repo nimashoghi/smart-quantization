@@ -12,7 +12,6 @@ def add_args_smart_compress(parent_parser: ArgumentParser):
     )
     parser.add_argument(
         "--num_samples",
-        "_s",
         type=int,
         default=25,
         help="number of samples to use for mean/std_dev calculation",
@@ -45,7 +44,7 @@ def add_args_smart_compress(parent_parser: ArgumentParser):
         help="use fp16 for outliers (intead of quantization)",
     )
     parser.add_argument(
-        "--hparams.main_std_dev_threshold",
+        "--main_std_dev_threshold",
         type=float,
         default=1.0,
         help="std dev to consider something main",

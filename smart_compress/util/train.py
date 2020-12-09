@@ -113,6 +113,6 @@ def init_model_from_args():
     data = datamodule_cls(model.hparams)
 
     if args.compress and args.compress != CompressionType.NoCompression:
-        register_global_hooks(compress_fn)
+        register_global_hooks(compress_fn, args)
 
     return model, trainer, data

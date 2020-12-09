@@ -31,7 +31,7 @@ def wrap_optimizer(optimizer, compress_fn, hparams: Namespace):
     return OptimLP(optimizer, **kwargs)
 
 
-def register_global_hooks(compress_fn, layer_types=DEFAULT_LAYER_TYPES):
+def register_global_hooks(compress_fn, hparams, layer_types=DEFAULT_LAYER_TYPES):
     def forward_hook(module: nn.Module, _: Tuple[torch.Tensor], output: torch.Tensor):
         if type(output) != torch.Tensor or not check_layer_types(
             module, layer_types=layer_types
@@ -39,6 +39,6 @@ def register_global_hooks(compress_fn, layer_types=DEFAULT_LAYER_TYPES):
             return None
 
         with torch.no_grad():
-            return compress_fn(output)
+            return compress_fn(output, hparams)
 
     register_module_forward_hook(forward_hook)

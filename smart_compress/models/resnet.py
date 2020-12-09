@@ -1,12 +1,13 @@
-import torch.nn.functional as F
 from argparse import ArgumentParser
 from enum import Enum
-from smart_compress.util.enum import ArgTypeMixin
+
+import torch.nn.functional as F
 from smart_compress.models.base import BaseModule
+from smart_compress.util.enum import ArgTypeMixin
 from torchvision.models import resnet18, resnet34, resnet50, resnet101, resnet152
 
 
-class ModelType(ArgTypeMixin, Enum):
+class ResNetModelType(ArgTypeMixin, Enum):
     resnet18 = 0
     resnet34 = 1
     resnet50 = 2
@@ -22,9 +23,9 @@ class ResNetModule(BaseModule):
         )
         parser.add_argument(
             "--resnet_model",
-            default=ModelType.resnet34,
-            type=ModelType.argtype,
-            choices=ModelType,
+            default=ResNetModelType.resnet34,
+            type=ResNetModelType.argtype,
+            choices=ResNetModelType,
         )
         parser.add_argument("--output_size", default=10, type=int)
         return parser
@@ -34,15 +35,15 @@ class ResNetModule(BaseModule):
 
         self.save_hyperparameters()
 
-        if self.hparams.resnet_model == ModelType.resnet18:
+        if self.hparams.resnet_model == ResNetModelType.resnet18:
             self.model = resnet18()
-        elif self.hparams.resnet_model == ModelType.resnet34:
+        elif self.hparams.resnet_model == ResNetModelType.resnet34:
             self.model = resnet34()
-        elif self.hparams.resnet_model == ModelType.resnet50:
+        elif self.hparams.resnet_model == ResNetModelType.resnet50:
             self.model = resnet50()
-        elif self.hparams.resnet_model == ModelType.resnet101:
+        elif self.hparams.resnet_model == ResNetModelType.resnet101:
             self.model = resnet101()
-        elif self.hparams.resnet_model == ModelType.resnet152:
+        elif self.hparams.resnet_model == ResNetModelType.resnet152:
             self.model = resnet152()
         else:
             raise Exception(f"Invalid ResNet model type: {self.hparams.resnet_model}")
