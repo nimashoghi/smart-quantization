@@ -169,6 +169,7 @@ def init_model_from_args():
         args,
         enable_pl_optimizer=True,
         logger=TensorBoardLogger("lightning_logs", name=args.name),
+        terminate_on_nan=True,
     )
 
     model = model_cls(compress_fn=compress_fn, **vars(args))

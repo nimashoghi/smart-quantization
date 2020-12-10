@@ -17,9 +17,10 @@ def add_args_smart_compress(parent_parser: ArgumentParser):
         help="use sample mean and std for smart compression",
     )
     parser.add_argument(
-        "--use_stochastic_rounding",
-        action="store_true",
+        "--no_stochastic_rounding",
+        action="store_false",
         help="use stochastic rounding when quantizing",
+        dest="stochastic_rounding",
     )
     parser.add_argument(
         "--num_bits_main",
@@ -85,7 +86,7 @@ def compress_smart(data: torch.Tensor, hparams: Namespace):
     )
     data.add_(scalars).mul_(ranges)
 
-    if hparams.use_stochastic_rounding:
+    if hparams.stochastic_rounding:
         data[(data - torch.floor(data)) >= torch.rand_like(data)] += 1
         data.floor_()
     else:
