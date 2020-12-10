@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 import torch
 from qtorch.quant.quant_function import float_quantize as quantize
 from torch import nn
@@ -149,6 +150,12 @@ def _get_max_value(exp: int, man: int):
     return max_value
 
 
+def add_float_quantize_args(parent_parser: ArgumentParser):
+    parser = ArgumentParser(parents=[parent_parser], add_help=False)
+    parser.add_argument("--float_quantize_check_inf", action="store_true")
+    return parser
+
+
 DEFAULT_LAYER_TYPES = ["conv", "linear", "pool", "normalization"]
 
 
@@ -161,19 +168,19 @@ def is_valid_layer_type(module, layer_types=DEFAULT_LAYER_TYPES):
     return type(module) in lp_layer_types
 
 
-def float_quantize(x: torch.Tensor, exp: int, man: int, check_inf=True, precision=32):
-    if precision == 16:
+def float_quantize(x: torch.Tensor, exp: int, man: int, hparams):
+    if hparams.precision == 16:
         return_value = quantize(x.float(), exp, man, rounding="nearest")
     else:
         return_value = quantize(x, exp, man, rounding="nearest")
 
-    if check_inf:
+    if hparams.float_quantize_check_inf:
         global TORCH_FLOAT_EPS
         max_value = _get_max_value(exp, man)
         should_be_inf = torch.abs(return_value - max_value) <= TORCH_FLOAT_EPS
         return_value[should_be_inf] = float("inf")
 
-    if precision == 16:
+    if hparams.precision == 16:
         return_value = return_value.half()
 
     return return_value

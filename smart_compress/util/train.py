@@ -7,6 +7,7 @@ from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
 from smart_compress.util.enum import ArgTypeMixin
 from smart_compress.util.pytorch.autograd import register_autograd_module
 from smart_compress.util.pytorch.hooks import register_global_hooks
+from smart_compress.util.pytorch.quantization import add_float_quantize_args
 
 
 class DatasetType(ArgTypeMixin, Enum):
@@ -67,7 +68,7 @@ def _get_compression(compression_type: CompressionType):
     if compression_type == CompressionType.FP8:
         from smart_compress.compress.fp8 import fp8_compress
 
-        return fp8_compress, _no_compression_args
+        return fp8_compress, add_float_quantize_args
     elif compression_type == CompressionType.SmartCompress:
         from smart_compress.compress.smart import (
             add_args_smart_compress,
@@ -78,15 +79,15 @@ def _get_compression(compression_type: CompressionType):
     elif compression_type == CompressionType.S2FP8:
         from smart_compress.compress.s2fp8 import compress_fp8_squeeze
 
-        return compress_fp8_squeeze, _no_compression_args
+        return compress_fp8_squeeze, add_float_quantize_args
     elif compression_type == CompressionType.FP16:
         from smart_compress.compress.fp16 import fp16_compress
 
-        return fp16_compress, _no_compression_args
+        return fp16_compress, add_float_quantize_args
     elif compression_type == CompressionType.BF16:
         from smart_compress.compress.bf16 import bf16_compress
 
-        return bf16_compress, _no_compression_args
+        return bf16_compress, add_float_quantize_args
     else:
         return _no_compression_process, _no_compression_args
 
