@@ -2,11 +2,10 @@ from abc import abstractmethod
 from argparse import ArgumentParser
 from enum import Enum
 
-import torch
-from smart_compress.util.pytorch_hooks import wrap_optimizer
-
 import pytorch_lightning as pl
+import torch
 from smart_compress.util.enum import ArgTypeMixin
+from smart_compress.util.pytorch.hooks import wrap_optimizer
 from torch.optim import SGD, Adam, AdamW
 
 

@@ -1,6 +1,6 @@
 import torch
-from smart_compress.util.compression import compression_function
-from smart_compress.util.quantization import float_quantize
+from smart_compress.util.pytorch.compression import compression_function
+from smart_compress.util.pytorch.quantization import float_quantize
 
 
 @compression_function

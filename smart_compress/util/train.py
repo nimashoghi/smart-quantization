@@ -5,7 +5,7 @@ import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
 from smart_compress.util.enum import ArgTypeMixin
-from smart_compress.util.pytorch_hooks import register_global_hooks
+from smart_compress.util.pytorch.hooks import register_global_hooks
 
 
 class DatasetType(ArgTypeMixin, Enum):
