@@ -1,7 +1,7 @@
 from argparse import ArgumentParser, Namespace
 
 import torch
-from smart_compress.util.pytorch_hooks import compression_function
+from smart_compress.util.compression import compression_function
 
 
 def add_args_smart_compress(parent_parser: ArgumentParser):

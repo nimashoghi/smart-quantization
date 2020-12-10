@@ -1,10 +1,10 @@
 import torch
-from smart_compress.util.pytorch_hooks import compression_function
+from smart_compress.util.compression import compression_function
 from smart_compress.util.quantization import float_quantize
 
 
 @compression_function
-def compress_fp8_squeeze(X: torch.Tensor, args):
+def compress_fp8_squeeze(X: torch.Tensor, _):
     X_abs = X.abs()
     X_abs_log2 = torch.where(
         X_abs == 0, X_abs, torch.log2(X_abs, out=torch.empty_like(X_abs))

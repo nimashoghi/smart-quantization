@@ -1,5 +1,5 @@
 import torch
-from smart_compress.util.pytorch_hooks import compression_function
+from smart_compress.util.compression import compression_function
 from smart_compress.util.quantization import float_quantize
 
 

@@ -10,15 +10,6 @@ from torch.nn.modules.module import register_module_forward_hook
 DEFAULT_LAYER_TYPES = ["conv", "linear", "pool", "normalization"]
 
 
-def compression_function(f):
-    def wrapped(x: torch.Tensor, *args, **kwargs):
-        with torch.no_grad():
-            x.data = f(x, *args, **kwargs)
-            return x
-
-    return wrapped
-
-
 def wrap_optimizer(optimizer, compress_fn, hparams: Namespace):
     kwargs = {}
     if hparams.compress_weights:
