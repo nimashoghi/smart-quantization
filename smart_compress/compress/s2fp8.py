@@ -1,9 +1,8 @@
 import torch
-from smart_compress.util.pytorch.compression import compression_function
 from smart_compress.util.pytorch.quantization import float_quantize
 
 
-@compression_function
+@torch.no_grad()
 def compress_fp8_squeeze(X: torch.Tensor, _):
     X_abs = X.abs()
     X_abs_log2 = torch.where(

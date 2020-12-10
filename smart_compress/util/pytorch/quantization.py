@@ -149,7 +149,10 @@ def _get_max_value(exp: int, man: int):
     return max_value
 
 
-def check_layer_types(module, layer_types=[]):
+DEFAULT_LAYER_TYPES = ["conv", "linear", "pool", "normalization"]
+
+
+def is_valid_layer_type(module, layer_types=DEFAULT_LAYER_TYPES):
     lp_layer_types = []
     for layer_type in layer_types:
         assert layer_type in LAYERS_TYPES.keys()

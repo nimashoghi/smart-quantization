@@ -5,6 +5,7 @@ import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
 from smart_compress.util.enum import ArgTypeMixin
+from smart_compress.util.pytorch.autograd import register_autograd_module
 from smart_compress.util.pytorch.hooks import register_global_hooks
 
 
@@ -25,6 +26,11 @@ class CompressionType(ArgTypeMixin, Enum):
     FP16 = 4
     BF16 = 5
     FP32 = 6
+
+
+class CompressionHookMethod(ArgTypeMixin, Enum):
+    AutoGradFunction = 0
+    PyTorchGlobalHook = 1
 
 
 def _get_model(model_type: ModelType):
@@ -115,9 +121,37 @@ def init_model_from_args():
         choices=CompressionType,
         type=CompressionType.argtype,
     )
-    parser.add_argument("--compress_weights", action="store_true")
-    parser.add_argument("--compress_gradients", action="store_true")
-    parser.add_argument("--compress_momentum_vectors", action="store_true")
+    parser.add_argument(
+        "--compression_hook_method",
+        default=CompressionHookMethod.AutoGradFunction,
+        choices=CompressionHookMethod,
+        type=CompressionHookMethod.argtype,
+    )
+    parser.add_argument(
+        "--no_compress_forward",
+        action="store_false",
+        dest="compress_forward",
+    )
+    parser.add_argument(
+        "--no_compress_backward",
+        action="store_false",
+        dest="compress_backward",
+    )
+    parser.add_argument(
+        "--no_compress_weights",
+        action="store_false",
+        dest="compress_weights",
+    )
+    parser.add_argument(
+        "--no_compress_gradients",
+        action="store_false",
+        dest="compress_gradients",
+    )
+    parser.add_argument(
+        "--no_compress_momentum_vectors",
+        action="store_false",
+        dest="compress_momentum_vectors",
+    )
     parser.add_argument("--name", required=False, type=str)
     parser = Trainer.add_argparse_args(parser)
     args, _ = parser.parse_known_args()
@@ -139,7 +173,21 @@ def init_model_from_args():
     model = model_cls(compress_fn=compress_fn, **vars(args))
     data = datamodule_cls(model.hparams)
 
-    if args.compress and args.compress != CompressionType.NoCompression:
-        register_global_hooks(compress_fn, args)
+    if (
+        model.hparams.compress
+        and model.hparams.compress != CompressionType.NoCompression
+    ):
+        if (
+            model.hparams.compression_hook_method
+            == CompressionHookMethod.AutoGradFunction
+        ):
+            model = register_autograd_module(model, compress_fn, model.hparams)
+        elif (
+            model.hparams.compression_hook_method
+            == CompressionHookMethod.PyTorchGlobalHook
+        ):
+            register_global_hooks(compress_fn, model.hparams)
+        else:
+            raise Exception("Could not find compression_hook_method")
 
     return model, trainer, data
