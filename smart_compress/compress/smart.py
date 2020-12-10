@@ -58,6 +58,8 @@ def _get_sample_mean_std(data: torch.Tensor, hparams: Namespace):
 
 @torch.no_grad()
 def compress_smart(data: torch.Tensor, hparams: Namespace):
+    data = data.clone()
+
     mean, std_dev = (
         (data.mean(), data.std())
         if not hparams.use_sample_stats
