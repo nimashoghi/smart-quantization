@@ -10,10 +10,13 @@ from torch.nn.modules.module import register_module_forward_hook
 DEFAULT_LAYER_TYPES = ["conv", "linear", "pool", "normalization"]
 
 
-def compress_data_(compress_fn, x: torch.Tensor, *args, **kwargs):
-    with torch.no_grad():
-        x.data = compress_fn(x.data, *args, **kwargs)
-        return x
+def compression_function(f):
+    def wrapped(x: torch.Tensor, *args, **kwargs):
+        with torch.no_grad():
+            x.data = f(x, *args, **kwargs)
+            return x
+
+    return wrapped
 
 
 def wrap_optimizer(optimizer, compress_fn, hparams: Namespace):
@@ -38,7 +41,6 @@ def register_global_hooks(compress_fn, hparams, layer_types=DEFAULT_LAYER_TYPES)
         ):
             return None
 
-        with torch.no_grad():
-            return compress_fn(output, hparams)
+        return compress_fn(output, hparams)
 
     register_module_forward_hook(forward_hook)

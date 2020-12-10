@@ -1,6 +1,7 @@
 from argparse import ArgumentParser, Namespace
 
 import torch
+from smart_compress.util.pytorch_hooks import compression_function
 
 
 def add_args_smart_compress(parent_parser: ArgumentParser):
@@ -56,7 +57,8 @@ def _get_sample_mean_std(data: torch.Tensor, hparams: Namespace):
     return sample.mean(), sample.std(unbiased=False)
 
 
-def compress_smart_(data: torch.Tensor, hparams: Namespace):
+@compression_function
+def compress_smart(data: torch.Tensor, hparams: Namespace):
     mean, std_dev = (
         (data.mean(), data.std())
         if not hparams.use_sample_stats

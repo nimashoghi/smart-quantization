@@ -1,6 +1,7 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from enum import Enum
 
+import torch
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
 from smart_compress.util.enum import ArgTypeMixin
@@ -48,11 +49,11 @@ def _get_datamodule(dataset_type: DatasetType):
         raise Exception(f"Datamodule {dataset_type} not found!")
 
 
-def _no_compression_process(x):
+def _no_compression_process(x: torch.Tensor, hparams: Namespace):
     return x
 
 
-def _no_compression_args(parent_parser):
+def _no_compression_args(parent_parser: ArgumentParser):
     return parent_parser
 
 
@@ -64,14 +65,14 @@ def _get_compression(compression_type: CompressionType):
     elif compression_type == CompressionType.SmartCompress:
         from smart_compress.compress.smart import (
             add_args_smart_compress,
-            compress_smart_,
+            compress_smart,
         )
 
-        return compress_smart_, add_args_smart_compress
+        return compress_smart, add_args_smart_compress
     elif compression_type == CompressionType.S2FP8:
-        from smart_compress.compress.s2fp8 import compress_fp8_squeeze_
+        from smart_compress.compress.s2fp8 import compress_fp8_squeeze
 
-        return compress_fp8_squeeze_, _no_compression_args
+        return compress_fp8_squeeze, _no_compression_args
     elif compression_type == CompressionType.FP16:
         from smart_compress.compress.fp16 import fp16_compress
 
@@ -130,7 +131,9 @@ def init_model_from_args():
 
     args = parser.parse_args()
     trainer = Trainer.from_argparse_args(
-        args, logger=TensorBoardLogger("lightning_logs", name=args.name)
+        args,
+        enable_pl_optimizer=True,
+        logger=TensorBoardLogger("lightning_logs", name=args.name),
     )
 
     model = model_cls(compress_fn=compress_fn, **vars(args))
