@@ -17,6 +17,7 @@ class DatasetType(ArgTypeMixin, Enum):
 
 class ModelType(ArgTypeMixin, Enum):
     ResNet = 0
+    Bert = 1
 
 
 class CompressionType(ArgTypeMixin, Enum):
@@ -39,6 +40,10 @@ def _get_model(model_type: ModelType):
         from smart_compress.models.resnet import ResNetModule
 
         return ResNetModule
+    elif model_type == ModelType.Bert:
+        from smart_compress.models.bert import BertModule
+
+        return BertModule
     else:
         raise Exception(f"Model {model_type} not found!")
 
@@ -158,6 +163,7 @@ def init_model_from_args():
     args, _ = parser.parse_known_args()
 
     model_cls = _get_model(args.model_type)
+    print(model_cls)
     datamodule_cls = _get_datamodule(args.dataset_type)
     compress_fn, add_args_fn = _get_compression(args.compress)
 

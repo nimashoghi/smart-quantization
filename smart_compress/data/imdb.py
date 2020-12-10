@@ -1,10 +1,9 @@
 from typing import Optional
 
 import pytorch_lightning as pl
+import torch
 from datasets import load_dataset
-from torch.utils.data import DataLoader
 from torch.utils.data.dataloader import DataLoader
-from transformers import AutoTokenizer
 from transformers.tokenization_utils_base import (
     PaddingStrategy,
     TensorType,
@@ -12,27 +11,24 @@ from transformers.tokenization_utils_base import (
 )
 
 
-class CIFARBaseDataModule(pl.LightningDataModule):
-    def __init__(self, hparams, tokenizer: AutoTokenizer):
-        super(CIFARBaseDataModule, self).__init__()
+class IMDBDataModule(pl.LightningDataModule):
+    def __init__(self, hparams):
+        super(IMDBDataModule, self).__init__()
 
         self.hparams = hparams
+        self.tokenizer = self.hparams.tokenizer_cls.from_pretrained(
+            self.hparams.bert_model
+        )
 
     def batch_collate(self, batch):
         input = self.tokenizer(
-            [value["description"] for value in batch],
+            [value["text"] for value in batch],
             max_length=self.hparams.input_length,
             padding=PaddingStrategy.MAX_LENGTH,
             truncation=TruncationStrategy.LONGEST_FIRST,
             return_tensors=TensorType.PYTORCH,
         )
-        output = self.tokenizer(
-            [value["label"] for value in batch],
-            max_length=self.hparams.output_length,
-            padding=PaddingStrategy.MAX_LENGTH,
-            truncation=TruncationStrategy.LONGEST_FIRST,
-            return_tensors=TensorType.PYTORCH,
-        )
+        output = torch.tensor([[value["label"]] for value in batch], dtype=torch.long)
 
         return dict(
             input_ids=input["input_ids"],

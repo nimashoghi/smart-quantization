@@ -19,7 +19,7 @@ python-versions = "*"
 
 [[package]]
 name = "cachetools"
-version = "4.1.1"
+version = "4.2.0"
 description = "Extensible memoizing collections and decorators"
 category = "main"
 optional = false
@@ -200,19 +200,6 @@ requests-oauthlib = ">=0.7.0"
 tool = ["click"]
 
 [[package]]
-name = "graphviz"
-version = "0.15"
-description = "Simple Python interface for Graphviz"
-category = "main"
-optional = false
-python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*"
-
-[package.extras]
-dev = ["tox (>=3)", "flake8", "pep8-naming", "wheel", "twine"]
-docs = ["sphinx (>=1.8)", "sphinx-rtd-theme"]
-test = ["mock (>=3)", "pytest (>=4)", "pytest-mock (>=2)", "pytest-cov"]
-
-[[package]]
 name = "grpcio"
 version = "1.34.0"
 description = "HTTP/2-based RPC framework"
@@ -391,7 +378,7 @@ mypy = ["mypy (==0.600)"]
 
 [[package]]
 name = "onnxruntime"
-version = "1.5.2"
+version = "1.6.0"
 description = "ONNX Runtime Python bindings"
 category = "main"
 optional = false
@@ -730,18 +717,6 @@ torch = "*"
 tqdm = "*"
 
 [[package]]
-name = "torchviz"
-version = "0.0.1"
-description = "A small package to create visualizations of PyTorch execution graphs"
-category = "main"
-optional = false
-python-versions = "*"
-
-[package.dependencies]
-graphviz = "*"
-torch = "*"
-
-[[package]]
 name = "tqdm"
 version = "4.49.0"
 description = "Fast, Extensible Progress Meter"
@@ -833,7 +808,7 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "feb84657fcd9e6d33e79200aa0b2da2124b764595bda7fb1108a2d9d5289a314"
+content-hash = "80002a098b98c675d13ab705e546445fede1de8167aeea2cd791df663e812f7d"
 
 [metadata.files]
 absl-py = [
@@ -844,8 +819,8 @@ antlr4-python3-runtime = [
     {file = "antlr4-python3-runtime-4.8.tar.gz", hash = "sha256:15793f5d0512a372b4e7d2284058ad32ce7dd27126b105fb0b2245130445db33"},
 ]
 cachetools = [
-    {file = "cachetools-4.1.1-py3-none-any.whl", hash = "sha256:513d4ff98dd27f85743a8dc0e92f55ddb1b49e060c2d5961512855cda2c01a98"},
-    {file = "cachetools-4.1.1.tar.gz", hash = "sha256:bbaa39c3dede00175df2dc2b03d0cf18dd2d32a7de7beb68072d13043c9edb20"},
+    {file = "cachetools-4.2.0-py3-none-any.whl", hash = "sha256:c6b07a6ded8c78bf36730b3dc452dfff7d95f2a12a2fed856b1a0cb13ca78c61"},
+    {file = "cachetools-4.2.0.tar.gz", hash = "sha256:3796e1de094f0eaca982441c92ce96c68c89cced4cd97721ab297ea4b16db90e"},
 ]
 certifi = [
     {file = "certifi-2020.12.5-py2.py3-none-any.whl", hash = "sha256:719a74fb9e33b9bd44cc7f3a8d94bc35e4049deebe19ba7d8e108280cfd59830"},
@@ -935,10 +910,6 @@ google-auth = [
 google-auth-oauthlib = [
     {file = "google-auth-oauthlib-0.4.2.tar.gz", hash = "sha256:65b65bc39ad8cab15039b35e5898455d3d66296d0584d96fe0e79d67d04c51d9"},
     {file = "google_auth_oauthlib-0.4.2-py2.py3-none-any.whl", hash = "sha256:d4d98c831ea21d574699978827490a41b94f05d565c617fe1b420e88f1fc8d8d"},
-]
-graphviz = [
-    {file = "graphviz-0.15-py2.py3-none-any.whl", hash = "sha256:403b55553b235875fa521023a06d9c29b46f3a956f960d4e0a5b956bca9eb9ce"},
-    {file = "graphviz-0.15.zip", hash = "sha256:2b85f105024e229ec330fe5067abbe9aa0d7708921a585ecc2bf56000bf5e027"},
 ]
 grpcio = [
     {file = "grpcio-1.34.0-cp27-cp27m-macosx_10_10_x86_64.whl", hash = "sha256:e2ffa46db9103706640c74886ac23ed18d1487a8523cc128da239e1d5a4e3301"},
@@ -1153,21 +1124,21 @@ onnx = [
     {file = "onnx-1.8.0.tar.gz", hash = "sha256:5f787fd3ce1290e12da335237b3b921152157e51aa09080b65631b3ce3fcc50c"},
 ]
 onnxruntime = [
-    {file = "onnxruntime-1.5.2-cp35-cp35m-macosx_10_12_x86_64.whl", hash = "sha256:9ce8b166c7eba95fde87f87813804b7bc143c74d3b7c6b1f6010433424885dc8"},
-    {file = "onnxruntime-1.5.2-cp35-cp35m-manylinux2014_aarch64.whl", hash = "sha256:cf895d4c2eaadd0ce86c97323ff4123bc8744e0283f95c272d291d6e645f31b1"},
-    {file = "onnxruntime-1.5.2-cp35-cp35m-manylinux2014_x86_64.whl", hash = "sha256:b8e6c97a7691174bbe37e2be922857d2d626b6be6747d9e9a4a8b5d5bc3ae3f3"},
-    {file = "onnxruntime-1.5.2-cp35-cp35m-win_amd64.whl", hash = "sha256:eea54734b4ff22847084c48354677acfa0155b4468b427076f5063af434fe6f4"},
-    {file = "onnxruntime-1.5.2-cp36-cp36m-macosx_10_12_x86_64.whl", hash = "sha256:c8b245cc004f3a27c8857f1a8b28bb70c3ec3812c229bc74ee3a9a3130c9408a"},
-    {file = "onnxruntime-1.5.2-cp36-cp36m-manylinux2014_aarch64.whl", hash = "sha256:c89026fe51b7687a2cc799151b56c78d514821e2721186a2be146372775cc3b9"},
-    {file = "onnxruntime-1.5.2-cp36-cp36m-manylinux2014_x86_64.whl", hash = "sha256:8d7d1f0990386ee166b366288b6bb99961362e4574574bf892ba9c27dae435fb"},
-    {file = "onnxruntime-1.5.2-cp36-cp36m-win_amd64.whl", hash = "sha256:2c31ad5bd9391c00773e05c3e6410f31e2b65ff280f5a1fe6f575c4c5d46a9f1"},
-    {file = "onnxruntime-1.5.2-cp37-cp37m-macosx_10_12_x86_64.whl", hash = "sha256:700a57ac232aecdf1bf756113fb5693b4f7196d0a9898f456baa68ef30ea2656"},
-    {file = "onnxruntime-1.5.2-cp37-cp37m-manylinux2014_aarch64.whl", hash = "sha256:f164d5ef9bfeb72feff4095a341c33366db309afb67b83784451e249782da990"},
-    {file = "onnxruntime-1.5.2-cp37-cp37m-manylinux2014_x86_64.whl", hash = "sha256:bf43878c15ba6bb4a919e66057ecd2c5d6870dc7bfbd3e3a446d1ed481f4b023"},
-    {file = "onnxruntime-1.5.2-cp37-cp37m-win_amd64.whl", hash = "sha256:fc481e9413d987fdf10aabf4eaa37f6c2e8752d61e8758b3a430e87e74d39140"},
-    {file = "onnxruntime-1.5.2-cp38-cp38-macosx_10_12_x86_64.whl", hash = "sha256:651f1d7674b9c6c44209f1a0492b91f2d996b46392de45fca87e3919f5d92a0a"},
-    {file = "onnxruntime-1.5.2-cp38-cp38-manylinux2014_x86_64.whl", hash = "sha256:edfac621a44bf0509c0ea767cf59bed712036f4fd0fc678dd68fa5a6fc07602f"},
-    {file = "onnxruntime-1.5.2-cp38-cp38-win_amd64.whl", hash = "sha256:74935ad47b19f989c21788371e77b1d881493e65205192906647671402d2286a"},
+    {file = "onnxruntime-1.6.0-cp35-cp35m-macosx_10_12_x86_64.whl", hash = "sha256:718fa0a331baee7382698608c6270f3a096569f1b0c37cc9cbdbaef53172f384"},
+    {file = "onnxruntime-1.6.0-cp35-cp35m-manylinux2014_aarch64.whl", hash = "sha256:49fe003cbc5ca5e00e9ff36527f119412436ed62d374fb28c63eb38a6fbd6685"},
+    {file = "onnxruntime-1.6.0-cp35-cp35m-manylinux2014_x86_64.whl", hash = "sha256:ca11f32c320bed752ae0ddbb9c47dff2ebf44fb001a2bf47a8b3b226b3d6b6a0"},
+    {file = "onnxruntime-1.6.0-cp35-cp35m-win_amd64.whl", hash = "sha256:da88ec5a2b6e484f7519c4acf9f441ab77c2b74c14a3e9e8a1b6761519b8f111"},
+    {file = "onnxruntime-1.6.0-cp36-cp36m-macosx_10_12_x86_64.whl", hash = "sha256:4e19a3b574f1d35942dbbb18873b9f73802dc11e94d7ef1690de4909af61de34"},
+    {file = "onnxruntime-1.6.0-cp36-cp36m-manylinux2014_aarch64.whl", hash = "sha256:8f4650308d697b10479dd8696be93b16fdaa04a52bcdad351e9b72ba5f81b7bb"},
+    {file = "onnxruntime-1.6.0-cp36-cp36m-manylinux2014_x86_64.whl", hash = "sha256:d8a68878044d83ca40d3e86ed5454a9844051cb9a2738794a8ed95b1ebb63e42"},
+    {file = "onnxruntime-1.6.0-cp36-cp36m-win_amd64.whl", hash = "sha256:a19d8c93a9f4ea52b8cbfc8258bbed8e81e72a7a48ebf4f33c18bf3694d492f0"},
+    {file = "onnxruntime-1.6.0-cp37-cp37m-macosx_10_12_x86_64.whl", hash = "sha256:49715f9cdbd36749df1bd2439d8a247b2ac61112fc9688dd67e7cf2a4cbe8916"},
+    {file = "onnxruntime-1.6.0-cp37-cp37m-manylinux2014_aarch64.whl", hash = "sha256:c0bfefac6deb9cc4e9194ee4a0fdca83e5fae8ebece20eff872073e09d0a8951"},
+    {file = "onnxruntime-1.6.0-cp37-cp37m-manylinux2014_x86_64.whl", hash = "sha256:124bd65cb7a581dfb25c247990ad07b10511f4682ae90281e1619f9ca804ac36"},
+    {file = "onnxruntime-1.6.0-cp37-cp37m-win_amd64.whl", hash = "sha256:34a0151de5acd59676562499762cb0c7d41f2134154e00bb626a54b8f3ef8cab"},
+    {file = "onnxruntime-1.6.0-cp38-cp38-macosx_10_12_x86_64.whl", hash = "sha256:972b602edf308f1a28dd3ae98a98f83145c58a6cca8069e7a3131a7a4fa5290e"},
+    {file = "onnxruntime-1.6.0-cp38-cp38-manylinux2014_x86_64.whl", hash = "sha256:6d8431f67f7517b20105ebd93530cc1f945c7fc2e77a7c6fb2c415c532d30cc8"},
+    {file = "onnxruntime-1.6.0-cp38-cp38-win_amd64.whl", hash = "sha256:8e8f139b32bf4d1ae9da453d223b7850a56064b6d11b6ea71f1e72fb50081f67"},
 ]
 packaging = [
     {file = "packaging-20.7-py2.py3-none-any.whl", hash = "sha256:eb41423378682dadb7166144a4926e443093863024de508ca5c9737d6bc08376"},
@@ -1523,9 +1494,6 @@ torch = [
 torchtext = [
     {file = "torchtext-0.6.0-py3-none-any.whl", hash = "sha256:100c6633d76c33eca10cf4a97ba20f95aff02efaa870032ef15b7a6a9f2fd77d"},
     {file = "torchtext-0.6.0.tar.gz", hash = "sha256:7522fbb58e847d698f6c6a3253d4c9482e193608fa0ca647c5cfc97d630518c4"},
-]
-torchviz = [
-    {file = "torchviz-0.0.1.tar.gz", hash = "sha256:6f5981d065e15e6c570e1177a31ab74fa38b71ba875feae262a0c6cd2e9a6667"},
 ]
 tqdm = [
     {file = "tqdm-4.49.0-py2.py3-none-any.whl", hash = "sha256:8f3c5815e3b5e20bc40463fa6b42a352178859692a68ffaa469706e6d38342a5"},

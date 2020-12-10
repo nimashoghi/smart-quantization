@@ -53,3 +53,13 @@ class ResNetModule(BaseModule):
 
     def loss_function(self, outputs, ground_truth):
         return F.cross_entropy(outputs, ground_truth)
+
+    def accuracy_function(self, outputs, ground_truth):
+        _, predicted = outputs.topk(5, 1, largest=True, sorted=True)
+        count = ground_truth.size(0)
+        ground_truth = ground_truth.view(count, -1).expand_as(predicted)
+        correct = predicted.eq(ground_truth).float()
+        correct_5 = correct[:, :5].sum() / count
+        correct_1 = correct[:, :1].sum() / count
+
+        return dict(correct_5=correct_5, correct_1=correct_1)

@@ -53,14 +53,7 @@ class BaseModule(pl.LightningModule):
         raise Exception("Not implemented")
 
     def accuracy_function(self, outputs, ground_truth):
-        _, predicted = outputs.topk(5, 1, largest=True, sorted=True)
-        count = ground_truth.size(0)
-        ground_truth = ground_truth.view(count, -1).expand_as(predicted)
-        correct = predicted.eq(ground_truth).float()
-        correct_5 = correct[:, :5].sum() / count
-        correct_1 = correct[:, :1].sum() / count
-
-        return dict(correct_5=correct_5, correct_1=correct_1)
+        return dict()
 
     def configure_optimizers(self):
         if self.hparams.optimizer_type == ArgType.SGD:
