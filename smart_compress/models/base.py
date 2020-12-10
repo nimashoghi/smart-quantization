@@ -28,7 +28,7 @@ class BaseModule(pl.LightningModule):
         parser.add_argument(
             "--learning_rate",
             type=float,
-            default=0.01,
+            default=0.00303276996,
         )
         parser.add_argument(
             "--weight_decay",
