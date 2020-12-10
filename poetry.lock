@@ -144,6 +144,19 @@ requests-oauthlib = ">=0.7.0"
 tool = ["click"]
 
 [[package]]
+name = "graphviz"
+version = "0.15"
+description = "Simple Python interface for Graphviz"
+category = "main"
+optional = false
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*"
+
+[package.extras]
+dev = ["tox (>=3)", "flake8", "pep8-naming", "wheel", "twine"]
+docs = ["sphinx (>=1.8)", "sphinx-rtd-theme"]
+test = ["mock (>=3)", "pytest (>=4)", "pytest-mock (>=2)", "pytest-cov"]
+
+[[package]]
 name = "grpcio"
 version = "1.34.0"
 description = "HTTP/2-based RPC framework"
@@ -562,6 +575,18 @@ torch = "*"
 tqdm = "*"
 
 [[package]]
+name = "torchviz"
+version = "0.0.1"
+description = "A small package to create visualizations of PyTorch execution graphs"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+graphviz = "*"
+torch = "*"
+
+[[package]]
 name = "tqdm"
 version = "4.54.1"
 description = "Fast, Extensible Progress Meter"
@@ -608,7 +633,7 @@ watchdog = ["watchdog"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "73c03a53e4ce556fbf3d75e69d903c895a3ca254ca62913b022ee4bff77d6b07"
+content-hash = "32318e5dda5f02cd455fcf718327157fe132460da23dda2378c6d26264ff5ed0"
 
 [metadata.files]
 absl-py = [
@@ -694,6 +719,10 @@ google-auth = [
 google-auth-oauthlib = [
     {file = "google-auth-oauthlib-0.4.2.tar.gz", hash = "sha256:65b65bc39ad8cab15039b35e5898455d3d66296d0584d96fe0e79d67d04c51d9"},
     {file = "google_auth_oauthlib-0.4.2-py2.py3-none-any.whl", hash = "sha256:d4d98c831ea21d574699978827490a41b94f05d565c617fe1b420e88f1fc8d8d"},
+]
+graphviz = [
+    {file = "graphviz-0.15-py2.py3-none-any.whl", hash = "sha256:403b55553b235875fa521023a06d9c29b46f3a956f960d4e0a5b956bca9eb9ce"},
+    {file = "graphviz-0.15.zip", hash = "sha256:2b85f105024e229ec330fe5067abbe9aa0d7708921a585ecc2bf56000bf5e027"},
 ]
 grpcio = [
     {file = "grpcio-1.34.0-cp27-cp27m-macosx_10_10_x86_64.whl", hash = "sha256:e2ffa46db9103706640c74886ac23ed18d1487a8523cc128da239e1d5a4e3301"},
@@ -1111,6 +1140,9 @@ torch = [
 torchtext = [
     {file = "torchtext-0.6.0-py3-none-any.whl", hash = "sha256:100c6633d76c33eca10cf4a97ba20f95aff02efaa870032ef15b7a6a9f2fd77d"},
     {file = "torchtext-0.6.0.tar.gz", hash = "sha256:7522fbb58e847d698f6c6a3253d4c9482e193608fa0ca647c5cfc97d630518c4"},
+]
+torchviz = [
+    {file = "torchviz-0.0.1.tar.gz", hash = "sha256:6f5981d065e15e6c570e1177a31ab74fa38b71ba875feae262a0c6cd2e9a6667"},
 ]
 tqdm = [
     {file = "tqdm-4.54.1-py2.py3-none-any.whl", hash = "sha256:d4f413aecb61c9779888c64ddf0c62910ad56dcbe857d8922bb505d4dbff0df1"},
