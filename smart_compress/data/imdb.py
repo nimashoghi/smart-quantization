@@ -28,7 +28,7 @@ class IMDBDataModule(pl.LightningDataModule):
             truncation=TruncationStrategy.LONGEST_FIRST,
             return_tensors=TensorType.PYTORCH,
         )
-        output = torch.tensor([[value["label"]] for value in batch], dtype=torch.long)
+        output = torch.tensor([value["label"] for value in batch], dtype=torch.long)
 
         return (
             dict(

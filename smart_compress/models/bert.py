@@ -13,7 +13,7 @@ class BertModule(BaseModule):
             parents=[BaseModule.add_model_specific_args(parent_parser)], add_help=False
         )
         parser.add_argument("--input_length", default=512, type=int)
-        parser.add_argument("--output_size", default=1, type=int)
+        parser.add_argument("--output_size", default=2, type=int)
         parser.add_argument("--bert_model", default="bert-base-uncased", type=str)
         parser.add_argument("--dropout_probability", default=0.3, type=float)
         return parser
