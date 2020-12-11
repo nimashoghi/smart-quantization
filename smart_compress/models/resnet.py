@@ -51,6 +51,9 @@ class ResNetModule(BaseModule):
         modules = list(self.model.modules())
         modules[-1].out_features = self.hparams.output_size
 
+    def forward(self, x):
+        return self.model(x)
+
     def loss_function(self, outputs, ground_truth):
         return F.cross_entropy(outputs, ground_truth)
 

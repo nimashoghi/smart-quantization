@@ -95,15 +95,20 @@ class BaseModule(pl.LightningModule):
 
         return optimizer
 
+    @abstractmethod
     def forward(self, x):
-        x = self.model(x)
-        return x
+        raise Exception("Not implemented")
 
-    def training_step(self, batch, _batch_idx):
+    def calculate_loss(self, batch):
         inputs, labels = batch
 
         outputs = self(inputs)
         loss = self.loss_function(outputs, labels)
+
+        return labels, loss, outputs
+
+    def training_step(self, batch, _batch_idx):
+        labels, loss, outputs = self.calculate_loss(batch)
 
         self.log("train_loss", loss, on_step=True, on_epoch=True)
         for metric, value in self.accuracy_function(outputs, labels).items():
@@ -112,10 +117,7 @@ class BaseModule(pl.LightningModule):
         return dict(loss=loss)
 
     def validation_step(self, batch, _batch_idx):
-        inputs, labels = batch
-
-        outputs = self(inputs)
-        loss = self.loss_function(outputs, labels)
+        labels, loss, outputs = self.calculate_loss(batch)
 
         self.log("val_loss", loss, on_step=True, on_epoch=True)
         for metric, value in self.accuracy_function(outputs, labels).items():

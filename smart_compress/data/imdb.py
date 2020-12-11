@@ -30,10 +30,12 @@ class IMDBDataModule(pl.LightningDataModule):
         )
         output = torch.tensor([[value["label"]] for value in batch], dtype=torch.long)
 
-        return dict(
-            input_ids=input["input_ids"],
-            input_mask=input["attention_mask"],
-            output=output,
+        return (
+            dict(
+                input_ids=input["input_ids"],
+                input_mask=input["attention_mask"],
+            ),
+            output,
         )
 
     def setup(self, stage: Optional[str]):
