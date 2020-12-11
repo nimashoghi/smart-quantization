@@ -13,6 +13,7 @@ from smart_compress.util.pytorch.quantization import add_float_quantize_args
 class DatasetType(ArgTypeMixin, Enum):
     CIFAR10 = 0
     CIFAR100 = 1
+    IMDB = 2
 
 
 class ModelType(ArgTypeMixin, Enum):
@@ -57,6 +58,10 @@ def _get_datamodule(dataset_type: DatasetType):
         from smart_compress.data.cifar100 import CIFAR100DataModule
 
         return CIFAR100DataModule
+    elif dataset_type == DatasetType.IMDB:
+        from smart_compress.data.imdb import IMDBDataModule
+
+        return IMDBDataModule
     else:
         raise Exception(f"Datamodule {dataset_type} not found!")
 
@@ -162,8 +167,10 @@ def init_model_from_args():
     parser = Trainer.add_argparse_args(parser)
     args, _ = parser.parse_known_args()
 
+    if args.model_type == ModelType.Bert and args.dataset_type != DatasetType.IMDB:
+        raise Exception("Only IMDB dataset supported for BERT")
+
     model_cls = _get_model(args.model_type)
-    print(model_cls)
     datamodule_cls = _get_datamodule(args.dataset_type)
     compress_fn, add_args_fn = _get_compression(args.compress)
 

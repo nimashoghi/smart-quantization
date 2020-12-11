@@ -24,7 +24,7 @@ class BertModule(BaseModule):
 
         self.model = BertModel.from_pretrained(self.hparams.bert_model)
         self.drop = nn.Dropout(p=self.hparams.dropout_probability)
-        self.out = nn.Linear(self.bert.config.hidden_size, self.hparams.output_size)
+        self.out = nn.Linear(self.model.config.hidden_size, self.hparams.output_size)
 
     def loss_function(self, outputs, ground_truth):
         return F.cross_entropy(outputs, ground_truth)
