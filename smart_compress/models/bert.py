@@ -16,6 +16,9 @@ class BertModule(BaseModule):
         parser.add_argument("--output_size", default=2, type=int)
         parser.add_argument("--bert_model", default="bert-base-uncased", type=str)
         parser.add_argument("--dropout_probability", default=0.3, type=float)
+        parser.add_argument(
+            "--no_freeze_bert", action="store_false", dest="freeze_bert"
+        )
         return parser
 
     def __init__(self, *args, tokenizer_cls=BertTokenizer, **kwargs):
@@ -24,13 +27,21 @@ class BertModule(BaseModule):
         self.save_hyperparameters()
 
         self.model = BertModel.from_pretrained(self.hparams.bert_model)
-        self.drop = nn.Dropout(p=self.hparams.dropout_probability)
-        self.out = nn.Linear(self.model.config.hidden_size, self.hparams.output_size)
+        self.fc1 = nn.Linear(
+            self.model.config.hidden_size, self.model.config.hidden_size
+        )
+        self.fc2 = nn.Linear(self.model.config.hidden_size, self.hparams.output_size)
+
+        if self.hparams.freeze_bert:
+            for param in self.model.parameters():
+                param.requires_grad = False
 
     def loss_function(self, outputs, ground_truth):
         return F.cross_entropy(outputs, ground_truth)
 
     def forward(self, x):
-        output = self.model(input_ids=x["input_ids"], attention_mask=x["input_mask"])
-        output = self.drop(output.pooler_output)
-        return self.out(output)
+        x = F.relu(self.model(**x).pooler_output)
+        x = F.dropout(x, p=self.hparams.dropout_probability)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        return x

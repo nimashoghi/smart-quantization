@@ -33,7 +33,7 @@ class IMDBDataModule(pl.LightningDataModule):
         return (
             dict(
                 input_ids=input["input_ids"],
-                input_mask=input["attention_mask"],
+                attention_mask=input["attention_mask"],
             ),
             output,
         )
