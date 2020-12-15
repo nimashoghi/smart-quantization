@@ -163,6 +163,11 @@ def init_model_from_args():
         action="store_false",
         dest="compress_momentum_vectors",
     )
+    parser.add_argument(
+        "--no_compress_loss",
+        action="store_false",
+        dest="compress_loss",
+    )
     parser.add_argument("--name", required=False, type=str)
     parser = Trainer.add_argparse_args(parser)
     args, _ = parser.parse_known_args()
