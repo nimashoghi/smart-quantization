@@ -3,7 +3,6 @@ from argparse import ArgumentParser, Namespace
 from typing import Iterator
 
 import pytorch_lightning as pl
-import torch
 from argparse_utils.mapping import mapping_action
 from smart_compress.util.pytorch.hooks import wrap_optimizer
 from torch import nn
@@ -33,7 +32,7 @@ class BaseModule(pl.LightningModule):
         parser.add_argument(
             "--learning_rate",
             type=float,
-            default=0.00303276996,
+            default=0.005,
         )
         parser.add_argument(
             "--weight_decay",
