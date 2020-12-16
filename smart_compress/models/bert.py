@@ -5,7 +5,7 @@ import datasets
 import torch
 import torch.nn.functional as F
 from smart_compress.models.base import BaseModule
-from transformers import BertForSequenceClassification, BertTokenizer
+from transformers import BertForSequenceClassification
 
 
 class BertModule(BaseModule):
@@ -15,18 +15,20 @@ class BertModule(BaseModule):
             parents=[BaseModule.add_argparse_args(parent_parser)], add_help=False
         )
         parser.add_argument("--num_labels", default=2, type=int)
-        parser.add_argument("--bert_model", default="bert-base-uncased", type=str)
+        parser.add_argument(
+            "--pretrained_model_name", default="bert-base-uncased", type=str
+        )
         parser.add_argument("--dropout_probability", default=0.3, type=float)
         parser.add_argument("--freeze", action="store_true", dest="freeze")
         return parser
 
-    def __init__(self, *args, tokenizer_cls=BertTokenizer, **kwargs):
+    def __init__(self, *args, **kwargs):
         super(BertModule, self).__init__(*args, **kwargs)
 
         self.save_hyperparameters()
 
         self.model = BertForSequenceClassification.from_pretrained(
-            self.hparams.bert_model, num_labels=self.hparams.num_labels
+            self.hparams.pretrained_model_name, num_labels=self.hparams.num_labels
         )
 
         if self.hparams.freeze:

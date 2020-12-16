@@ -2,9 +2,11 @@ from argparse import ArgumentParser
 from typing import Optional
 
 import datasets
-import pytorch_lightning as pl
+from pytorch_lightning import LightningDataModule
 import torch
+from argparse_utils.mapping import mapping_action
 from torch.utils.data import DataLoader
+from transformers import BertTokenizer
 from transformers.tokenization_utils_base import (
     PaddingStrategy,
     TensorType,
@@ -12,7 +14,7 @@ from transformers.tokenization_utils_base import (
 )
 
 
-class GLUEDataModule(pl.LightningDataModule):
+class GLUEDataModule(LightningDataModule):
     task_text_field_map = {
         "cola": ["sentence"],
         "sst2": ["sentence"],
@@ -60,6 +62,11 @@ class GLUEDataModule(pl.LightningDataModule):
             choices=list(GLUEDataModule.task_text_field_map.keys()),
             default="mrpc",
         )
+        parser.add_argument(
+            "--tokenizer_cls",
+            action=mapping_action(dict(bert=BertTokenizer)),
+            default="bert",
+        )
         return parser
 
     def __init__(self, hparams):
@@ -71,7 +78,7 @@ class GLUEDataModule(pl.LightningDataModule):
             self.hparams.val_batch_size = max(self.hparams.batch_size // 4, 1)
 
         self.tokenizer = self.hparams.tokenizer_cls.from_pretrained(
-            self.hparams.bert_model
+            self.hparams.pretrained_model_name
         )
         self.text_fields = self.task_text_field_map[self.hparams.task_name]
         self.num_labels = self.glue_task_num_labels[self.hparams.task_name]
@@ -87,7 +94,7 @@ class GLUEDataModule(pl.LightningDataModule):
 
     def prepare_data(self):
         datasets.load_dataset("glue", self.hparams.task_name)
-        self.hparams.tokenizer_cls.from_pretrained(self.hparams.bert_model)
+        self.hparams.tokenizer_cls.from_pretrained(self.hparams.pretrained_model_name)
 
     def train_dataloader(self):
         return DataLoader(

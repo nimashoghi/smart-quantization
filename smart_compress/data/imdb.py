@@ -1,10 +1,12 @@
 from argparse import ArgumentParser
 from typing import Optional
 
-import pytorch_lightning as pl
 import torch
+from argparse_utils.mapping import mapping_action
 from datasets import load_dataset
+from pytorch_lightning import LightningDataModule
 from torch.utils.data.dataloader import DataLoader
+from transformers import BertTokenizer
 from transformers.tokenization_utils_base import (
     PaddingStrategy,
     TensorType,
@@ -12,13 +14,18 @@ from transformers.tokenization_utils_base import (
 )
 
 
-class IMDBDataModule(pl.LightningDataModule):
+class IMDBDataModule(LightningDataModule):
     @staticmethod
     def add_argparse_args(parent_parser: ArgumentParser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument("--max_input_length", default=512, type=int)
         parser.add_argument("--batch_size", default=8, type=int, help="batch size")
         parser.add_argument("--val_batch_size", type=int, help="validation batch size")
+        parser.add_argument(
+            "--tokenizer_cls",
+            action=mapping_action(dict(bert=BertTokenizer)),
+            default="bert",
+        )
         return parser
 
     def __init__(self, hparams):
@@ -29,7 +36,7 @@ class IMDBDataModule(pl.LightningDataModule):
             self.hparams.val_batch_size = max(self.hparams.batch_size // 4, 1)
 
         self.tokenizer = self.hparams.tokenizer_cls.from_pretrained(
-            self.hparams.bert_model
+            self.hparams.pretrained_model_name
         )
 
     def batch_collate(self, batch):
@@ -61,7 +68,7 @@ class IMDBDataModule(pl.LightningDataModule):
 
     def prepare_data(self):
         load_dataset("imdb")
-        self.hparams.tokenizer_cls.from_pretrained(self.hparams.bert_model)
+        self.hparams.tokenizer_cls.from_pretrained(self.hparams.pretrained_model_name)
 
     def train_dataloader(self):
         return DataLoader(

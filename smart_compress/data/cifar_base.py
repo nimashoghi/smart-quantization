@@ -2,11 +2,10 @@ from abc import abstractmethod
 from argparse import ArgumentParser
 from typing import Optional, Union
 
-import pytorch_lightning as pl
+from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
 from torch.utils.data.dataloader import DataLoader
 from torchvision import transforms
-from torchvision.datasets.cifar import CIFAR10, CIFAR100
 
 transform = transforms.Compose(
     [
@@ -23,7 +22,7 @@ test_transform = transforms.Compose(
 )
 
 
-class CIFARBaseDataModule(pl.LightningDataModule):
+class CIFARBaseDataModule(LightningDataModule):
     @staticmethod
     def add_argparse_args(parent_parser: ArgumentParser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)

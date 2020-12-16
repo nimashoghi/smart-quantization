@@ -1,3 +1,4 @@
+import inspect
 from argparse import ArgumentParser
 from enum import Enum, auto
 
@@ -115,6 +116,19 @@ def init_model_from_args():
         logger=TensorBoardLogger("lightning_logs", name=args.name),
         terminate_on_nan=True,
     )
+
+    args_dict = dict(**vars(args))
+    for name, value in args_dict.items():
+        if name.endswith("_cls"):
+            assert inspect.isclass(value)
+            setattr(
+                args,
+                f"{name}_name",
+                value.__name__
+                if value.__module__ is None
+                or value.__module__ == str.__class__.__module__
+                else f"{value.__module__}.{value.__name__}",
+            )
 
     compression = args.compression_cls(args) if args.compress else None
     model = args.model_cls(compression=compression, **vars(args))
