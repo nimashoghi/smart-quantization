@@ -43,11 +43,7 @@ class BertModule(BaseModule):
         return F.cross_entropy(outputs, ground_truth)
 
     def calculate_loss(self, batch):
-        if type(batch) == tuple:
-            inputs, labels = batch
-        else:
-            inputs, labels = batch, batch["labels"]
-            del inputs["labels"]
+        inputs, labels = batch
 
         outputs = self(inputs, labels)
         loss = outputs.loss

@@ -1,7 +1,9 @@
 from argparse import ArgumentParser
+from typing import Optional
 
 import datasets
 import pytorch_lightning as pl
+import torch
 from torch.utils.data import DataLoader
 from transformers.tokenization_utils_base import (
     PaddingStrategy,
@@ -52,6 +54,7 @@ class GLUEDataModule(pl.LightningDataModule):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument("--max_input_length", default=512, type=int)
         parser.add_argument("--batch_size", default=8, type=int, help="batch size")
+        parser.add_argument("--val_batch_size", type=int, help="validation batch size")
         parser.add_argument(
             "--task_name",
             choices=list(GLUEDataModule.task_text_field_map.keys()),
@@ -64,27 +67,23 @@ class GLUEDataModule(pl.LightningDataModule):
 
         self.hparams = hparams
 
+        if self.hparams.val_batch_size is None:
+            self.hparams.val_batch_size = max(self.hparams.batch_size // 4, 1)
+
         self.tokenizer = self.hparams.tokenizer_cls.from_pretrained(
             self.hparams.bert_model
         )
         self.text_fields = self.task_text_field_map[self.hparams.task_name]
         self.num_labels = self.glue_task_num_labels[self.hparams.task_name]
 
-    def setup(self, stage):
+    def setup(self, stage: Optional[str]):
         self.dataset = datasets.load_dataset("glue", self.hparams.task_name)
 
-        for split in self.dataset.keys():
-            self.dataset[split] = self.dataset[split].map(
-                self.convert_to_features,
-                batched=True,
-                remove_columns=["label"],
-            )
-            self.columns = [
-                c for c in self.dataset[split].column_names if c in self.loader_columns
-            ]
-            self.dataset[split].set_format(type="torch", columns=self.columns)
-
-        self.hparams.eval_splits = [x for x in self.dataset.keys() if "validation" in x]
+        if stage == "fit" or stage is None:
+            self.train_dataset = self.dataset["train"]
+            self.val_dataset = self.dataset["validation"]
+        if stage == "test" or stage is None:
+            self.test_dataset = self.dataset["test"]
 
     def prepare_data(self):
         datasets.load_dataset("glue", self.hparams.task_name)
@@ -92,78 +91,53 @@ class GLUEDataModule(pl.LightningDataModule):
 
     def train_dataloader(self):
         return DataLoader(
-            self.dataset["train"],
+            self.train_dataset,
             batch_size=self.hparams.batch_size,
             pin_memory=True,
             num_workers=8,
             shuffle=True,
+            collate_fn=self.collate_fn,
         )
 
-    @property
-    def test_batch_size(self):
-        return max(self.hparams.batch_size // 4, 2)
-
     def val_dataloader(self):
-        if len(self.hparams.eval_splits) == 1:
-            return DataLoader(
-                self.dataset["validation"],
-                batch_size=self.test_batch_size,
-                pin_memory=True,
-                num_workers=8,
-            )
-        elif len(self.hparams.eval_splits) > 1:
-            return [
-                DataLoader(
-                    self.dataset[x],
-                    batch_size=self.test_batch_size,
-                    pin_memory=True,
-                    num_workers=8,
-                )
-                for x in self.hparams.eval_splits
-            ]
+        return DataLoader(
+            self.val_dataset,
+            batch_size=self.hparams.val_batch_size,
+            pin_memory=True,
+            num_workers=8,
+            collate_fn=self.collate_fn,
+        )
 
     def test_dataloader(self):
-        if len(self.hparams.eval_splits) == 1:
-            return DataLoader(
-                self.dataset["test"],
-                batch_size=self.test_batch_size,
-                pin_memory=True,
-                num_workers=8,
-            )
-        elif len(self.hparams.eval_splits) > 1:
-            return [
-                DataLoader(
-                    self.dataset[x],
-                    batch_size=self.test_batch_size,
-                    pin_memory=True,
-                    num_workers=8,
-                )
-                for x in self.hparams.eval_splits
-            ]
+        return DataLoader(
+            self.test_dataset,
+            batch_size=self.hparams.val_batch_size,
+            pin_memory=True,
+            num_workers=8,
+            collate_fn=self.collate_fn,
+        )
 
-    def convert_to_features(self, batch, indices=None):
+    def collate_fn(self, batch):
         # Either encode single sentence or sentence pairs
-        if len(self.text_fields) > 1:
-            texts_or_text_pairs = list(
-                zip(
-                    batch[self.text_fields[0]],
-                    batch[self.text_fields[1]],
-                )
-            )
+        if len(self.text_fields) == 2:
+            texts_or_text_pairs = [
+                tuple(element[text_field] for text_field in self.text_fields)
+                for element in batch
+            ]
+        elif len(self.text_fields) == 1:
+            [text_field] = self.text_fields
+            texts_or_text_pairs = [element[text_field] for element in batch]
         else:
-            texts_or_text_pairs = batch[self.text_fields[0]]
+            raise Exception("self.text_fields must be 1 or 2")
 
         features = self.tokenizer(
             texts_or_text_pairs,
             max_length=self.hparams.max_input_length,
             padding=PaddingStrategy.MAX_LENGTH,
             truncation=TruncationStrategy.LONGEST_FIRST,
-            return_tensors=TensorType.NUMPY,
+            return_tensors=TensorType.PYTORCH,
         )
 
-        features["labels"] = batch["label"]
-
-        features["attention_mask"].flags.writeable = True
-        features["input_ids"].flags.writeable = True
-
-        return features
+        return features, torch.tensor(
+            [element["label"] for element in batch], dtype=torch.long
+        )

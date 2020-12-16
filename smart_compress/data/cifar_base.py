@@ -27,12 +27,15 @@ class CIFARBaseDataModule(pl.LightningDataModule):
     @staticmethod
     def add_argparse_args(parent_parser: ArgumentParser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
+        parser.add_argument("--val_batch_size", type=int, help="validation batch size")
         return parser
 
     def __init__(self, hparams):
         super(CIFARBaseDataModule, self).__init__()
 
         self.hparams = hparams
+        if self.hparams.val_batch_size is None:
+            self.hparams.val_batch_size = max(self.hparams.batch_size // 4, 1)
 
     @abstractmethod
     def make_dataset(self, *args, **kwargs):
@@ -52,10 +55,6 @@ class CIFARBaseDataModule(pl.LightningDataModule):
                 "test", transform=test_transform, train=False, download=True
             )
 
-    @property
-    def test_batch_size(self):
-        return max(self.hparams.batch_size // 4, 2)
-
     def train_dataloader(self):
         return DataLoader(
             self.cifar_train,
@@ -68,7 +67,7 @@ class CIFARBaseDataModule(pl.LightningDataModule):
     def val_dataloader(self):
         return DataLoader(
             self.cifar_val,
-            batch_size=self.test_batch_size,
+            batch_size=self.hparams.val_batch_size,
             shuffle=False,
             num_workers=8,
             pin_memory=True,
@@ -77,7 +76,7 @@ class CIFARBaseDataModule(pl.LightningDataModule):
     def test_dataloader(self):
         return DataLoader(
             self.cifar_test,
-            batch_size=self.test_batch_size,
+            batch_size=self.hparams.val_batch_size,
             shuffle=False,
             num_workers=8,
             pin_memory=True,

@@ -18,12 +18,16 @@ class IMDBDataModule(pl.LightningDataModule):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument("--max_input_length", default=512, type=int)
         parser.add_argument("--batch_size", default=8, type=int, help="batch size")
+        parser.add_argument("--val_batch_size", type=int, help="validation batch size")
         return parser
 
     def __init__(self, hparams):
         super(IMDBDataModule, self).__init__()
 
         self.hparams = hparams
+        if self.hparams.val_batch_size is None:
+            self.hparams.val_batch_size = max(self.hparams.batch_size // 4, 1)
+
         self.tokenizer = self.hparams.tokenizer_cls.from_pretrained(
             self.hparams.bert_model
         )
@@ -59,10 +63,6 @@ class IMDBDataModule(pl.LightningDataModule):
         load_dataset("imdb")
         self.hparams.tokenizer_cls.from_pretrained(self.hparams.bert_model)
 
-    @property
-    def test_batch_size(self):
-        return max(self.hparams.batch_size // 4, 2)
-
     def train_dataloader(self):
         return DataLoader(
             self.imdb_train,
@@ -76,7 +76,7 @@ class IMDBDataModule(pl.LightningDataModule):
     def val_dataloader(self):
         return DataLoader(
             self.imdb_val,
-            batch_size=self.test_batch_size,
+            batch_size=self.hparams.val_batch_size,
             shuffle=False,
             num_workers=8,
             pin_memory=True,
@@ -86,7 +86,7 @@ class IMDBDataModule(pl.LightningDataModule):
     def test_dataloader(self):
         return DataLoader(
             self.imdb_test,
-            batch_size=self.test_batch_size,
+            batch_size=self.hparams.val_batch_size,
             shuffle=False,
             num_workers=8,
             pin_memory=True,
