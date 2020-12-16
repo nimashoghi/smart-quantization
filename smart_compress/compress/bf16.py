@@ -1,7 +1,23 @@
+from abc import abstractmethod
+from argparse import ArgumentParser, Namespace
+
 import torch
+from smart_compress.compress.base import CompressionAlgorithmBase
 from smart_compress.util.pytorch.quantization import float_quantize
 
 
-@torch.no_grad()
-def bf16_compress(x: torch.Tensor, hparams):
-    return float_quantize(x, exp=8, man=7, hparams=hparams)
+class BF16(CompressionAlgorithmBase):
+    @staticmethod
+    def add_argparse_args(parent_parser: ArgumentParser):
+        parser = ArgumentParser(
+            parents=[CompressionAlgorithmBase.add_argparse_args(parent_parser)],
+            add_help=False,
+        )
+        return parser
+
+    def __init__(self, hparams: Namespace):
+        super(BF16, self).__init__(hparams)
+
+    @torch.no_grad()
+    def __call__(self, tensor: torch.Tensor):
+        return float_quantize(tensor, exp=8, man=7, hparams=self.hparams)

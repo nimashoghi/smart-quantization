@@ -17,9 +17,9 @@ class ResNetModelType(ArgTypeMixin, Enum):
 
 class ResNetModule(BaseModule):
     @staticmethod
-    def add_model_specific_args(parent_parser):
+    def add_argparse_args(parent_parser):
         parser = ArgumentParser(
-            parents=[BaseModule.add_model_specific_args(parent_parser)], add_help=False
+            parents=[BaseModule.add_argparse_args(parent_parser)], add_help=False
         )
         parser.add_argument(
             "--resnet_model",

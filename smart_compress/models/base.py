@@ -4,6 +4,7 @@ from enum import Enum
 
 import pytorch_lightning as pl
 import torch
+from smart_compress.compress.fp32 import FP32
 from smart_compress.util.enum import ArgTypeMixin
 from smart_compress.util.pytorch.hooks import wrap_optimizer
 from torch.optim import SGD, Adam, AdamW
@@ -17,7 +18,7 @@ class ArgType(ArgTypeMixin, Enum):
 
 class BaseModule(pl.LightningModule):
     @staticmethod
-    def add_model_specific_args(parent_parser):
+    def add_argparse_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument(
             "--optimizer_type",
@@ -42,10 +43,10 @@ class BaseModule(pl.LightningModule):
         )
         return parser
 
-    def __init__(self, *args, compress_fn=None, **kwargs):
+    def __init__(self, *args, compression=FP32(), **kwargs):
         super(BaseModule, self).__init__()
 
-        self.compress_fn = compress_fn
+        self.compression = compression
         self.save_hyperparameters()
 
     @abstractmethod
@@ -79,17 +80,13 @@ class BaseModule(pl.LightningModule):
             raise Exception("No optimizer")
 
         if (
-            self.hparams.compress
-            and (
-                self.hparams.compress_weights
-                or self.hparams.compress_gradients
-                or self.hparams.compress_momentum_vectors
-            )
-            and self.compress_fn is not None
+            self.hparams.compress_weights
+            or self.hparams.compress_gradients
+            or self.hparams.compress_momentum_vectors
         ):
 
             def optimizer_compress(x: torch.Tensor):
-                return self.compress_fn(x, self.hparams)
+                return self.compression(x, self.hparams)
 
             optimizer = wrap_optimizer(optimizer, optimizer_compress, self.hparams)
 
@@ -105,7 +102,7 @@ class BaseModule(pl.LightningModule):
         outputs = self(inputs)
         loss = self.loss_function(outputs, labels)
         if self.hparams.compress_loss:
-            loss = self.compress_fn(loss, self.hparams)
+            loss = self.compression(loss, self.hparams)
 
         return labels, loss, outputs
 

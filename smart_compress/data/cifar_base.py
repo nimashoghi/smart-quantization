@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from argparse import ArgumentParser
 from typing import Optional, Union
 
 import pytorch_lightning as pl
@@ -23,6 +24,11 @@ test_transform = transforms.Compose(
 
 
 class CIFARBaseDataModule(pl.LightningDataModule):
+    @staticmethod
+    def add_argparse_args(parent_parser: ArgumentParser):
+        parser = ArgumentParser(parents=[parent_parser], add_help=False)
+        return parser
+
     def __init__(self, hparams):
         super(CIFARBaseDataModule, self).__init__()
 

@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 from typing import Optional
 
 import pytorch_lightning as pl
@@ -12,6 +13,13 @@ from transformers.tokenization_utils_base import (
 
 
 class IMDBDataModule(pl.LightningDataModule):
+    @staticmethod
+    def add_argparse_args(parent_parser: ArgumentParser):
+        parser = ArgumentParser(parents=[parent_parser], add_help=False)
+        parser.add_argument("--max_input_length", default=512, type=int)
+        parser.add_argument("--batch_size", default=8, type=int, help="batch size")
+        return parser
+
     def __init__(self, hparams):
         super(IMDBDataModule, self).__init__()
 
@@ -23,7 +31,7 @@ class IMDBDataModule(pl.LightningDataModule):
     def batch_collate(self, batch):
         input = self.tokenizer(
             [value["text"] for value in batch],
-            max_length=self.hparams.input_length,
+            max_length=self.hparams.max_input_length,
             padding=PaddingStrategy.MAX_LENGTH,
             truncation=TruncationStrategy.LONGEST_FIRST,
             return_tensors=TensorType.PYTORCH,

@@ -2,6 +2,7 @@ from argparse import ArgumentParser, Namespace
 from enum import Enum
 
 import torch
+from argparse_utils import mapping_action
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
 from smart_compress.util.enum import ArgTypeMixin
@@ -103,34 +104,48 @@ def _get_compression(compression_type: CompressionType):
 
 
 def init_model_from_args():
+    from smart_compress.compress.bf16 import BF16
+    from smart_compress.compress.fp8 import FP8
+    from smart_compress.compress.fp16 import FP16
+    from smart_compress.compress.fp32 import FP32
+    from smart_compress.compress.s2fp8 import S2FP8
+    from smart_compress.compress.smart import SmartFP
+    from smart_compress.data.cifar10 import CIFAR10DataModule
+    from smart_compress.data.cifar100 import CIFAR100DataModule
+    from smart_compress.data.glue import GLUEDataModule
+    from smart_compress.data.imdb import IMDBDataModule
+    from smart_compress.models.bert import BertModule
+    from smart_compress.models.resnet import ResNetModule
+
     parser = ArgumentParser()
     parser.add_argument(
         "--model",
-        type=ModelType.argtype,
-        default=ModelType.ResNet,
-        choices=ModelType,
+        action=mapping_action(dict(bert=BertModule, resnet=ResNetModule)),
+        default="resnet",
         help="model name",
-        dest="model_type",
+        dest="model_cls",
     )
     parser.add_argument(
         "--dataset",
-        default=DatasetType.CIFAR10,
-        choices=DatasetType,
-        type=DatasetType.argtype,
+        action=mapping_action(
+            dict(
+                cifar10=CIFAR10DataModule,
+                cifar100=CIFAR100DataModule,
+                glue=GLUEDataModule,
+                imdb=IMDBDataModule,
+            )
+        ),
+        default="cifar10",
         help="dataset name",
-        dest="dataset_type",
-    )
-    parser.add_argument(
-        "--batch_size",
-        default=8,
-        type=int,
-        help="batch size",
+        dest="dataset_cls",
     )
     parser.add_argument(
         "--compress",
-        default=CompressionType.NoCompression,
-        choices=CompressionType,
-        type=CompressionType.argtype,
+        action=mapping_action(
+            dict(bf16=BF16, fp8=FP8, fp16=FP16, fp32=FP32, s2fp8=S2FP8, smart=SmartFP)
+        ),
+        default="fp32",
+        dest="compression_cls",
     )
     parser.add_argument(
         "--compression_hook_method",
@@ -172,15 +187,16 @@ def init_model_from_args():
     parser = Trainer.add_argparse_args(parser)
     args, _ = parser.parse_known_args()
 
-    if args.model_type == ModelType.Bert and args.dataset_type != DatasetType.IMDB:
-        raise Exception("Only IMDB dataset supported for BERT")
+    if args.model_cls == ModelType.Bert:
+        assert args.dataset_cls in (GLUEDataModule, IMDBDataModule)
+    elif args.model_cls == ResNetModule:
+        assert args.dataset_cls in (CIFAR10DataModule, CIFAR100DataModule)
+    else:
+        raise Exception("invalid model_cls")
 
-    model_cls = _get_model(args.model_type)
-    datamodule_cls = _get_datamodule(args.dataset_type)
-    compress_fn, add_args_fn = _get_compression(args.compress)
-
-    parser = model_cls.add_model_specific_args(parser)
-    parser = add_args_fn(parser)
+    parser = args.compression_cls.add_argparse_args(parser)
+    parser = args.model_cls.add_argparse_args(parser)
+    parser = args.dataset_cls.add_argparse_args(parser)
 
     args = parser.parse_args()
     trainer = Trainer.from_argparse_args(
@@ -190,8 +206,9 @@ def init_model_from_args():
         terminate_on_nan=True,
     )
 
-    model = model_cls(compress_fn=compress_fn, **vars(args))
-    data = datamodule_cls(model.hparams)
+    compression = args.compression_cls(args)
+    model = args.model_cls(compression=compression, **vars(args))
+    data = args.dataset_cls(model.hparams)
 
     if (
         model.hparams.compress
@@ -201,12 +218,12 @@ def init_model_from_args():
             model.hparams.compression_hook_method
             == CompressionHookMethod.AutoGradFunction
         ):
-            model = register_autograd_module(model, compress_fn, model.hparams)
+            model = register_autograd_module(model, compression, model.hparams)
         elif (
             model.hparams.compression_hook_method
             == CompressionHookMethod.PyTorchGlobalHook
         ):
-            register_global_hooks(compress_fn, model.hparams)
+            register_global_hooks(compression, model.hparams)
         else:
             raise Exception("Could not find compression_hook_method")
 

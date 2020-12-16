@@ -8,11 +8,10 @@ from transformers import BertModel, BertTokenizer
 
 class BertModule(BaseModule):
     @staticmethod
-    def add_model_specific_args(parent_parser):
+    def add_argparse_args(parent_parser):
         parser = ArgumentParser(
-            parents=[BaseModule.add_model_specific_args(parent_parser)], add_help=False
+            parents=[BaseModule.add_argparse_args(parent_parser)], add_help=False
         )
-        parser.add_argument("--input_length", default=512, type=int)
         parser.add_argument("--output_size", default=2, type=int)
         parser.add_argument("--bert_model", default="bert-base-uncased", type=str)
         parser.add_argument("--dropout_probability", default=0.3, type=float)
