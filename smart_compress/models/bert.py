@@ -27,19 +27,21 @@ class BertModule(BaseModule):
         )
 
         if self.hparams.freeze:
-            for param in self.model.parameters():
+            for param in self.model.bert.parameters():
                 param.requires_grad = False
 
     def loss_function(self, outputs, ground_truth):
         return F.cross_entropy(outputs, ground_truth)
 
     def calculate_loss(self, batch):
-        inputs, labels = batch
+        if type(batch) == tuple:
+            inputs, labels = batch
+        else:
+            inputs, labels = batch, batch["labels"]
+            del inputs["labels"]
 
         outputs = self(inputs, labels)
         loss = outputs.loss
-        if self.hparams.compress_loss:
-            loss = self.compression(loss, self.hparams)
 
         return labels, loss, outputs
 

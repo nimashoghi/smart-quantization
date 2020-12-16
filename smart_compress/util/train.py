@@ -49,7 +49,7 @@ def init_model_from_args():
         help="dataset name",
         dest="dataset_cls",
     )
-    parser.add_argument("--no_compress", type="store_false", dest="compress")
+    parser.add_argument("--no_compress", action="store_false", dest="compress")
     parser.add_argument(
         "--compress",
         action=mapping_action(
@@ -97,7 +97,7 @@ def init_model_from_args():
     parser = Trainer.add_argparse_args(parser)
     args, _ = parser.parse_known_args()
 
-    if args.model_cls == ModelType.Bert:
+    if args.model_cls == BertModule:
         assert args.dataset_cls in (GLUEDataModule, IMDBDataModule)
     elif args.model_cls == ResNetModule:
         assert args.dataset_cls in (CIFAR10DataModule, CIFAR100DataModule)
@@ -116,14 +116,11 @@ def init_model_from_args():
         terminate_on_nan=True,
     )
 
-    compression = args.compression_cls(args)
+    compression = args.compression_cls(args) if args.compress else None
     model = args.model_cls(compression=compression, **vars(args))
     data = args.dataset_cls(model.hparams)
 
-    if (
-        model.hparams.compress
-        and model.hparams.compress != CompressionType.NoCompression
-    ):
+    if model.hparams.compress:
         if model.hparams.compression_hook_method == CompressionHookMethod.AUTOGRAD:
             model = register_autograd_module(model, compression, model.hparams)
         elif model.hparams.compression_hook_method == CompressionHookMethod.GLOBAL_HOOK:

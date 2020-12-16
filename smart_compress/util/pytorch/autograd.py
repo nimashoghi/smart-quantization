@@ -6,14 +6,14 @@ from smart_compress.util.pytorch.quantization import is_valid_layer_type
 from torch.autograd import Function
 
 
-def _create_autograd_compress_fn(compress_fn, hparams, forward=True, backward=True):
+def _create_autograd_compress_fn(compress_fn, forward=True, backward=True):
     class Compressor(Function):
         @staticmethod
         def forward(ctx, x):
             if not forward:
                 return x
 
-            return compress_fn(x, hparams)
+            return compress_fn(x)
 
         @staticmethod
         def backward(ctx, grad_output):
@@ -23,17 +23,17 @@ def _create_autograd_compress_fn(compress_fn, hparams, forward=True, backward=Tr
             if not ctx.needs_input_grad[0]:
                 return None
 
-            return compress_fn(grad_output, hparams)
+            return compress_fn(grad_output)
 
     return Compressor.apply
 
 
 class Compressor(nn.Module):
-    def __init__(self, compress_fn, hparams, forward=True, backward=True):
+    def __init__(self, compress_fn, forward=True, backward=True):
         super(Compressor, self).__init__()
 
         self.compress_fn = _create_autograd_compress_fn(
-            compress_fn, hparams, forward=forward, backward=backward
+            compress_fn, forward=forward, backward=backward
         )
 
     def forward(self, x):
@@ -43,7 +43,6 @@ class Compressor(nn.Module):
 def register_autograd_module(model: BaseModule, compress_fn, hparams: Namespace):
     compressor = Compressor(
         compress_fn,
-        hparams,
         forward=hparams.compress_forward,
         backward=hparams.compress_backward,
     )

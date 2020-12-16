@@ -1,4 +1,3 @@
-#%%
 from argparse import Namespace
 from typing import List, Tuple
 
@@ -28,14 +27,14 @@ def wrap_optimizer(optimizer, compress_fn, hparams: Namespace):
     return OptimLP(optimizer, **kwargs)
 
 
-def _register_forward_hook(compress_fn, hparams, layer_types=DEFAULT_LAYER_TYPES):
+def _register_forward_hook(compress_fn, layer_types=DEFAULT_LAYER_TYPES):
     def forward_hook(module: nn.Module, _: Tuple[torch.Tensor], output: torch.Tensor):
         if type(output) != torch.Tensor or not is_valid_layer_type(
             module, layer_types=layer_types
         ):
             return None
 
-        return compress_fn(output, hparams)
+        return compress_fn(output)
 
     return register_module_forward_hook(forward_hook)
 
@@ -43,7 +42,5 @@ def _register_forward_hook(compress_fn, hparams, layer_types=DEFAULT_LAYER_TYPES
 def register_global_hooks(compress_fn, hparams, layer_types=DEFAULT_LAYER_TYPES):
     hooks: List[RemovableHandle] = []
     if hparams.compress_forward:
-        hooks.append(
-            _register_forward_hook(compress_fn, hparams, layer_types=layer_types)
-        )
+        hooks.append(_register_forward_hook(compress_fn, layer_types=layer_types))
     return hooks

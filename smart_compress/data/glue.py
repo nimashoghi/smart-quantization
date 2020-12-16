@@ -91,7 +91,13 @@ class GLUEDataModule(pl.LightningDataModule):
         self.hparams.tokenizer_cls.from_pretrained(self.hparams.bert_model)
 
     def train_dataloader(self):
-        return DataLoader(self.dataset["train"], batch_size=self.hparams.batch_size)
+        return DataLoader(
+            self.dataset["train"],
+            batch_size=self.hparams.batch_size,
+            pin_memory=True,
+            num_workers=8,
+            shuffle=True,
+        )
 
     @property
     def test_batch_size(self):
@@ -100,20 +106,38 @@ class GLUEDataModule(pl.LightningDataModule):
     def val_dataloader(self):
         if len(self.eval_splits) == 1:
             return DataLoader(
-                self.dataset["validation"], batch_size=self.test_batch_size
+                self.dataset["validation"],
+                batch_size=self.test_batch_size,
+                pin_memory=True,
+                num_workers=8,
             )
         elif len(self.eval_splits) > 1:
             return [
-                DataLoader(self.dataset[x], batch_size=self.test_batch_size)
+                DataLoader(
+                    self.dataset[x],
+                    batch_size=self.test_batch_size,
+                    pin_memory=True,
+                    num_workers=8,
+                )
                 for x in self.eval_splits
             ]
 
     def test_dataloader(self):
         if len(self.eval_splits) == 1:
-            return DataLoader(self.dataset["test"], batch_size=self.test_batch_size)
+            return DataLoader(
+                self.dataset["test"],
+                batch_size=self.test_batch_size,
+                pin_memory=True,
+                num_workers=8,
+            )
         elif len(self.eval_splits) > 1:
             return [
-                DataLoader(self.dataset[x], batch_size=self.test_batch_size)
+                DataLoader(
+                    self.dataset[x],
+                    batch_size=self.test_batch_size,
+                    pin_memory=True,
+                    num_workers=8,
+                )
                 for x in self.eval_splits
             ]
 
@@ -134,7 +158,9 @@ class GLUEDataModule(pl.LightningDataModule):
             max_length=self.hparams.max_input_length,
             padding=PaddingStrategy.MAX_LENGTH,
             truncation=TruncationStrategy.LONGEST_FIRST,
-            return_tensors=TensorType.PYTORCH,
+            return_tensors=TensorType.NUMPY,
         )
 
-        return features, batch["label"]
+        features["labels"] = batch["label"]
+
+        return features

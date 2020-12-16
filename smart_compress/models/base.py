@@ -73,11 +73,7 @@ class BaseModule(pl.LightningModule):
             or self.hparams.compress_gradients
             or self.hparams.compress_momentum_vectors
         ):
-
-            def optimizer_compress(x: torch.Tensor):
-                return self.compression(x, self.hparams)
-
-            optimizer = wrap_optimizer(optimizer, optimizer_compress, self.hparams)
+            optimizer = wrap_optimizer(optimizer, self.compression, self.hparams)
 
         return optimizer
 
@@ -90,8 +86,14 @@ class BaseModule(pl.LightningModule):
 
         outputs = self(inputs)
         loss = self.loss_function(outputs, labels)
+
+        return labels, loss, outputs
+
+    def calculate_loss_with_compression(self, batch):
+        labels, loss, outputs = self.calculate_loss(batch)
+
         if self.hparams.compress_loss:
-            loss = self.compression(loss, self.hparams)
+            loss = self.compression(loss)
 
         return labels, loss, outputs
 
