@@ -1,106 +1,16 @@
-from argparse import ArgumentParser, Namespace
-from enum import Enum
+from argparse import ArgumentParser
+from enum import Enum, auto
 
-import torch
-from argparse_utils import mapping_action
+from argparse_utils import enum_action, mapping_action
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
-from smart_compress.util.enum import ArgTypeMixin
 from smart_compress.util.pytorch.autograd import register_autograd_module
 from smart_compress.util.pytorch.hooks import register_global_hooks
-from smart_compress.util.pytorch.quantization import add_float_quantize_args
 
 
-class DatasetType(ArgTypeMixin, Enum):
-    CIFAR10 = 0
-    CIFAR100 = 1
-    IMDB = 2
-
-
-class ModelType(ArgTypeMixin, Enum):
-    ResNet = 0
-    Bert = 1
-
-
-class CompressionType(ArgTypeMixin, Enum):
-    NoCompression = 0
-    FP8 = 1
-    SmartCompress = 2
-    S2FP8 = 3
-    FP16 = 4
-    BF16 = 5
-    FP32 = 6
-
-
-class CompressionHookMethod(ArgTypeMixin, Enum):
-    AutoGradFunction = 0
-    PyTorchGlobalHook = 1
-
-
-def _get_model(model_type: ModelType):
-    if model_type == ModelType.ResNet:
-        from smart_compress.models.resnet import ResNetModule
-
-        return ResNetModule
-    elif model_type == ModelType.Bert:
-        from smart_compress.models.bert import BertModule
-
-        return BertModule
-    else:
-        raise Exception(f"Model {model_type} not found!")
-
-
-def _get_datamodule(dataset_type: DatasetType):
-    if dataset_type == DatasetType.CIFAR10:
-        from smart_compress.data.cifar10 import CIFAR10DataModule
-
-        return CIFAR10DataModule
-    elif dataset_type == DatasetType.CIFAR100:
-        from smart_compress.data.cifar100 import CIFAR100DataModule
-
-        return CIFAR100DataModule
-    elif dataset_type == DatasetType.IMDB:
-        from smart_compress.data.imdb import IMDBDataModule
-
-        return IMDBDataModule
-    else:
-        raise Exception(f"Datamodule {dataset_type} not found!")
-
-
-def _no_compression_process(x: torch.Tensor, hparams: Namespace):
-    return x
-
-
-def _no_compression_args(parent_parser: ArgumentParser):
-    return parent_parser
-
-
-def _get_compression(compression_type: CompressionType):
-    if compression_type == CompressionType.FP8:
-        from smart_compress.compress.fp8 import fp8_compress
-
-        return fp8_compress, add_float_quantize_args
-    elif compression_type == CompressionType.SmartCompress:
-        from smart_compress.compress.smart import (
-            add_args_smart_compress,
-            compress_smart,
-        )
-
-        return compress_smart, add_args_smart_compress
-    elif compression_type == CompressionType.S2FP8:
-        from smart_compress.compress.s2fp8 import compress_fp8_squeeze
-
-        return compress_fp8_squeeze, add_float_quantize_args
-    elif compression_type == CompressionType.FP16:
-        from smart_compress.compress.fp16 import fp16_compress
-
-        return fp16_compress, add_float_quantize_args
-    elif compression_type == CompressionType.BF16:
-        from smart_compress.compress.bf16 import bf16_compress
-
-        return bf16_compress, add_float_quantize_args
-    else:
-        return _no_compression_process, _no_compression_args
+class CompressionHookMethod(Enum):
+    AUTOGRAD = auto()
+    GLOBAL_HOOK = auto()
 
 
 def init_model_from_args():
@@ -139,6 +49,7 @@ def init_model_from_args():
         help="dataset name",
         dest="dataset_cls",
     )
+    parser.add_argument("--no_compress", type="store_false", dest="compress")
     parser.add_argument(
         "--compress",
         action=mapping_action(
@@ -149,9 +60,8 @@ def init_model_from_args():
     )
     parser.add_argument(
         "--compression_hook_method",
-        default=CompressionHookMethod.AutoGradFunction,
-        choices=CompressionHookMethod,
-        type=CompressionHookMethod.argtype,
+        action=enum_action(CompressionHookMethod, str.lower),
+        default=CompressionHookMethod.AUTOGRAD,
     )
     parser.add_argument(
         "--no_compress_forward",
@@ -214,15 +124,9 @@ def init_model_from_args():
         model.hparams.compress
         and model.hparams.compress != CompressionType.NoCompression
     ):
-        if (
-            model.hparams.compression_hook_method
-            == CompressionHookMethod.AutoGradFunction
-        ):
+        if model.hparams.compression_hook_method == CompressionHookMethod.AUTOGRAD:
             model = register_autograd_module(model, compression, model.hparams)
-        elif (
-            model.hparams.compression_hook_method
-            == CompressionHookMethod.PyTorchGlobalHook
-        ):
+        elif model.hparams.compression_hook_method == CompressionHookMethod.GLOBAL_HOOK:
             register_global_hooks(compression, model.hparams)
         else:
             raise Exception("Could not find compression_hook_method")

@@ -55,6 +55,10 @@ class IMDBDataModule(pl.LightningDataModule):
         if stage == "test" or stage is None:
             self.imdb_test = self.dataset["test"]
 
+    def prepare_data(self):
+        load_dataset("imdb")
+        self.hparams.tokenizer_cls.from_pretrained(self.hparams.bert_model)
+
     @property
     def test_batch_size(self):
         return max(self.hparams.batch_size // 4, 2)

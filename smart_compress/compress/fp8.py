@@ -2,14 +2,21 @@ from argparse import ArgumentParser, Namespace
 
 import torch
 from smart_compress.compress.base import CompressionAlgorithmBase
-from smart_compress.util.pytorch.quantization import float_quantize
+from smart_compress.util.pytorch.quantization import (
+    add_float_quantize_args,
+    float_quantize,
+)
 
 
 class FP8(CompressionAlgorithmBase):
     @staticmethod
     def add_argparse_args(parent_parser: ArgumentParser):
         parser = ArgumentParser(
-            parents=[CompressionAlgorithmBase.add_argparse_args(parent_parser)],
+            parents=[
+                add_float_quantize_args(
+                    CompressionAlgorithmBase.add_argparse_args(parent_parser)
+                )
+            ],
             add_help=False,
         )
         return parser

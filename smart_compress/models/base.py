@@ -1,19 +1,23 @@
 from abc import abstractmethod
-from argparse import ArgumentParser
-from enum import Enum
+from argparse import ArgumentParser, Namespace
+from typing import Iterator
 
 import pytorch_lightning as pl
 import torch
-from smart_compress.compress.fp32 import FP32
-from smart_compress.util.enum import ArgTypeMixin
+from argparse_utils.mapping import mapping_action
 from smart_compress.util.pytorch.hooks import wrap_optimizer
-from torch.optim import SGD, Adam, AdamW
+from torch import nn
 
 
-class ArgType(ArgTypeMixin, Enum):
-    SGD = 0
-    ADAM = 1
-    ADAMW = 2
+def make_sgd_optimizer(parameters: Iterator[nn.Parameter], hparams: Namespace):
+    from torch.optim import SGD
+
+    return SGD(
+        parameters,
+        lr=hparams.learning_rate,
+        momentum=hparams.momentum,
+        weight_decay=hparams.weight_decay,
+    )
 
 
 class BaseModule(pl.LightningModule):
@@ -22,9 +26,9 @@ class BaseModule(pl.LightningModule):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument(
             "--optimizer_type",
-            default=ArgType.SGD,
-            type=ArgType.argtype,
-            choices=ArgType,
+            action=mapping_action(dict(sgd=make_sgd_optimizer)),
+            default="sgd",
+            dest="make_optimizer_fn",
         )
         parser.add_argument(
             "--learning_rate",
@@ -43,10 +47,15 @@ class BaseModule(pl.LightningModule):
         )
         return parser
 
-    def __init__(self, *args, compression=FP32(), **kwargs):
+    def __init__(self, *args, compression=None, **kwargs):
         super(BaseModule, self).__init__()
 
         self.compression = compression
+        if self.compression is None:
+            from smart_compress.compress.fp32 import FP32
+
+            self.compression = FP32(self.hparams)
+
         self.save_hyperparameters()
 
     @abstractmethod
@@ -57,27 +66,7 @@ class BaseModule(pl.LightningModule):
         return dict()
 
     def configure_optimizers(self):
-        if self.hparams.optimizer_type == ArgType.SGD:
-            optimizer = SGD(
-                self.parameters(),
-                lr=self.hparams.learning_rate,
-                momentum=self.hparams.momentum,
-                weight_decay=self.hparams.weight_decay,
-            )
-        elif self.hparams.optimizer_type == ArgType.ADAM:
-            optimizer = Adam(
-                self.parameters(),
-                lr=self.hparams.learning_rate,
-                weight_decay=self.hparams.weight_decay,
-            )
-        elif self.hparams.optimizer_type == ArgType.ADAMW:
-            optimizer = AdamW(
-                self.parameters(),
-                lr=self.hparams.learning_rate,
-                weight_decay=self.hparams.weight_decay,
-            )
-        else:
-            raise Exception("No optimizer")
+        optimizer = self.hparams.make_optimizer_fn(self.parameters(), self.hparams)
 
         if (
             self.hparams.compress_weights

@@ -1,18 +1,9 @@
 from argparse import ArgumentParser
-from enum import Enum
 
 import torch.nn.functional as F
+from argparse_utils.mapping import mapping_action
 from smart_compress.models.base import BaseModule
-from smart_compress.util.enum import ArgTypeMixin
 from torchvision.models import resnet18, resnet34, resnet50, resnet101, resnet152
-
-
-class ResNetModelType(ArgTypeMixin, Enum):
-    resnet18 = 0
-    resnet34 = 1
-    resnet50 = 2
-    resnet101 = 3
-    resnet152 = 4
 
 
 class ResNetModule(BaseModule):
@@ -23,9 +14,17 @@ class ResNetModule(BaseModule):
         )
         parser.add_argument(
             "--resnet_model",
-            default=ResNetModelType.resnet34,
-            type=ResNetModelType.argtype,
-            choices=ResNetModelType,
+            action=mapping_action(
+                dict(
+                    resnet18=resnet18,
+                    resnet34=resnet34,
+                    resnet50=resnet50,
+                    resnet101=resnet101,
+                    resnet152=resnet152,
+                )
+            ),
+            default="resnet34",
+            dest="resnet_model_fn",
         )
         parser.add_argument("--output_size", default=10, type=int)
         return parser
@@ -35,19 +34,7 @@ class ResNetModule(BaseModule):
 
         self.save_hyperparameters()
 
-        if self.hparams.resnet_model == ResNetModelType.resnet18:
-            self.model = resnet18()
-        elif self.hparams.resnet_model == ResNetModelType.resnet34:
-            self.model = resnet34()
-        elif self.hparams.resnet_model == ResNetModelType.resnet50:
-            self.model = resnet50()
-        elif self.hparams.resnet_model == ResNetModelType.resnet101:
-            self.model = resnet101()
-        elif self.hparams.resnet_model == ResNetModelType.resnet152:
-            self.model = resnet152()
-        else:
-            raise Exception(f"Invalid ResNet model type: {self.hparams.resnet_model}")
-
+        self.model = self.hparams.resnet_model_fn()
         modules = list(self.model.modules())
         modules[-1].out_features = self.hparams.output_size
 

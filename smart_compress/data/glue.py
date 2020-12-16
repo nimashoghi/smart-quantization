@@ -117,17 +117,17 @@ class GLUEDataModule(pl.LightningDataModule):
                 for x in self.eval_splits
             ]
 
-    def convert_to_features(self, example_batch, indices=None):
+    def convert_to_features(self, batch, indices=None):
         # Either encode single sentence or sentence pairs
         if len(self.text_fields) > 1:
             texts_or_text_pairs = list(
                 zip(
-                    example_batch[self.text_fields[0]],
-                    example_batch[self.text_fields[1]],
+                    batch[self.text_fields[0]],
+                    batch[self.text_fields[1]],
                 )
             )
         else:
-            texts_or_text_pairs = example_batch[self.text_fields[0]]
+            texts_or_text_pairs = batch[self.text_fields[0]]
 
         features = self.tokenizer(
             texts_or_text_pairs,
@@ -137,6 +137,4 @@ class GLUEDataModule(pl.LightningDataModule):
             return_tensors=TensorType.PYTORCH,
         )
 
-        features["labels"] = example_batch["label"]
-
-        return features
+        return features, batch["label"]
