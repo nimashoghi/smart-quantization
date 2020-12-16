@@ -84,7 +84,7 @@ class GLUEDataModule(pl.LightningDataModule):
             ]
             self.dataset[split].set_format(type="torch", columns=self.columns)
 
-        self.eval_splits = [x for x in self.dataset.keys() if "validation" in x]
+        self.hparams.eval_splits = [x for x in self.dataset.keys() if "validation" in x]
 
     def prepare_data(self):
         datasets.load_dataset("glue", self.hparams.task_name)
@@ -104,14 +104,14 @@ class GLUEDataModule(pl.LightningDataModule):
         return max(self.hparams.batch_size // 4, 2)
 
     def val_dataloader(self):
-        if len(self.eval_splits) == 1:
+        if len(self.hparams.eval_splits) == 1:
             return DataLoader(
                 self.dataset["validation"],
                 batch_size=self.test_batch_size,
                 pin_memory=True,
                 num_workers=8,
             )
-        elif len(self.eval_splits) > 1:
+        elif len(self.hparams.eval_splits) > 1:
             return [
                 DataLoader(
                     self.dataset[x],
@@ -119,18 +119,18 @@ class GLUEDataModule(pl.LightningDataModule):
                     pin_memory=True,
                     num_workers=8,
                 )
-                for x in self.eval_splits
+                for x in self.hparams.eval_splits
             ]
 
     def test_dataloader(self):
-        if len(self.eval_splits) == 1:
+        if len(self.hparams.eval_splits) == 1:
             return DataLoader(
                 self.dataset["test"],
                 batch_size=self.test_batch_size,
                 pin_memory=True,
                 num_workers=8,
             )
-        elif len(self.eval_splits) > 1:
+        elif len(self.hparams.eval_splits) > 1:
             return [
                 DataLoader(
                     self.dataset[x],
@@ -138,7 +138,7 @@ class GLUEDataModule(pl.LightningDataModule):
                     pin_memory=True,
                     num_workers=8,
                 )
-                for x in self.eval_splits
+                for x in self.hparams.eval_splits
             ]
 
     def convert_to_features(self, batch, indices=None):
@@ -162,5 +162,8 @@ class GLUEDataModule(pl.LightningDataModule):
         )
 
         features["labels"] = batch["label"]
+
+        features["attention_mask"].flags.writeable = True
+        features["input_ids"].flags.writeable = True
 
         return features

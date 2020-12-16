@@ -102,7 +102,9 @@ class BaseModule(pl.LightningModule):
 
         self.log("train_loss", loss, on_step=True, on_epoch=True)
         for metric, value in self.accuracy_function(outputs, labels).items():
-            self.log(f"train_accuracy_{metric}", value, on_step=True, on_epoch=True)
+            self.log(
+                f"train_{metric}", value, on_step=True, on_epoch=True, prog_bar=True
+            )
 
         return dict(loss=loss)
 
@@ -111,6 +113,6 @@ class BaseModule(pl.LightningModule):
 
         self.log("val_loss", loss, on_step=True, on_epoch=True)
         for metric, value in self.accuracy_function(outputs, labels).items():
-            self.log(f"val_accuracy_{metric}", value, on_step=True, on_epoch=True)
+            self.log(f"val_{metric}", value, on_step=True, on_epoch=True)
 
         return dict(loss=loss)

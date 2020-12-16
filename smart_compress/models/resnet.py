@@ -52,4 +52,4 @@ class ResNetModule(BaseModule):
         correct_5 = correct[:, :5].sum() / count
         correct_1 = correct[:, :1].sum() / count
 
-        return dict(correct_5=correct_5, correct_1=correct_1)
+        return dict(top5_accuracy=correct_5, top1_accuracy=correct_1)
