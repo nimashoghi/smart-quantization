@@ -95,6 +95,7 @@ def init_model_from_args():
         dest="compress_loss",
     )
     parser.add_argument("--name", required=False, type=str)
+    parser.add_argument("--logdir", default="lightning_logs", type=str)
     parser = Trainer.add_argparse_args(parser)
     args, _ = parser.parse_known_args()
 
@@ -113,7 +114,7 @@ def init_model_from_args():
     trainer = Trainer.from_argparse_args(
         args,
         enable_pl_optimizer=True,
-        logger=TensorBoardLogger("lightning_logs", name=args.name),
+        logger=TensorBoardLogger(args.logdir, name=args.name),
         terminate_on_nan=True,
     )
 

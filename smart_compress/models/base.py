@@ -4,6 +4,7 @@ from typing import Iterator
 
 import pytorch_lightning as pl
 from argparse_utils.mapping import mapping_action
+import torch
 from smart_compress.util.pytorch.hooks import wrap_optimizer
 from torch import nn
 
@@ -44,6 +45,7 @@ class BaseModule(pl.LightningModule):
             type=float,
             default=0.9,
         )
+        parser.add_argument("--measure_average_grad_norm", action="store_true")
         return parser
 
     def __init__(self, *args, compression=None, **kwargs):
@@ -56,6 +58,20 @@ class BaseModule(pl.LightningModule):
             self.compression = FP32(self.hparams)
 
         self.save_hyperparameters()
+
+        if self.hparams.measure_average_grad_norm:
+            self._grads = []
+
+    def training_epoch_end(self, *args, **kwargs):
+        if not self.hparams.measure_average_grad_norm:
+            return super(BaseModule, self).training_step_end(*args, **kwargs)
+
+        try:
+            avg = torch.mean(torch.tensor(self._grads))
+            print(f"AVERAGE: {avg}")
+        except:
+            pass
+        return super(BaseModule, self).training_step_end(*args, **kwargs)
 
     @abstractmethod
     def loss_function(self, outputs, ground_truth):
@@ -115,3 +131,20 @@ class BaseModule(pl.LightningModule):
             self.log(f"val_{metric}", value, on_step=True, on_epoch=True)
 
         return dict(loss=loss)
+
+    def optimizer_zero_grad(self, *args, **kwargs):
+        if not self.hparams.measure_average_grad_norm:
+            return super(BaseModule, self).optimizer_zero_grad(*args, **kwargs)
+
+        norms = torch.tensor(
+            [
+                parameter.grad.norm()
+                for parameter in self.parameters()
+                if parameter.grad is not None
+            ]
+        )
+
+        if len(norms):
+            self._grads.append(torch.mean(norms))
+
+        return super(BaseModule, self).optimizer_zero_grad(*args, **kwargs)
