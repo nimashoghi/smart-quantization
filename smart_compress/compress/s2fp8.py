@@ -26,6 +26,8 @@ class S2FP8(CompressionAlgorithmBase):
 
     @torch.no_grad()
     def __call__(self, tensor: torch.Tensor):
+        self.log_ratio(32, 8)
+
         X = tensor
 
         X_abs = X.abs()

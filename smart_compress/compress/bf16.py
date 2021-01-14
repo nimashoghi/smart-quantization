@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from argparse import ArgumentParser, Namespace
 
 import torch
@@ -27,4 +26,5 @@ class BF16(CompressionAlgorithmBase):
 
     @torch.no_grad()
     def __call__(self, tensor: torch.Tensor):
+        self.log_ratio(32, 16)
         return float_quantize(tensor, exp=8, man=7, hparams=self.hparams)

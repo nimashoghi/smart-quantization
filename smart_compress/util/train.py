@@ -133,6 +133,7 @@ def init_model_from_args():
 
     compression = args.compression_cls(args) if args.compress else None
     model = args.model_cls(compression=compression, **vars(args))
+    compression.log = lambda *args, **kwargs: model.log(*args, **kwargs)
     data = args.dataset_cls(model.hparams)
 
     if model.hparams.compress:

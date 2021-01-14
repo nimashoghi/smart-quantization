@@ -8,6 +8,7 @@ class CompressionAlgorithmBase:
     @staticmethod
     def add_argparse_args(parent_parser: ArgumentParser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
+        parser.add_argument("--measure_compression_ratio", action="store_true")
         return parser
 
     def __init__(self, hparams: Namespace):
@@ -17,6 +18,20 @@ class CompressionAlgorithmBase:
 
     def update_hparams(self, hparams: Namespace):
         self.hparams = hparams
+
+    def log_ratio(self, orig_size: float, new_size: float):
+        assert hasattr(self, "log")
+
+        if not self.hparams.measure_compression_ratio:
+            return
+
+        self.log(
+            f"compression_ratio",
+            orig_size / new_size,
+            on_step=True,
+            on_epoch=True,
+            prog_bar=True,
+        )
 
     @abstractmethod
     def __call__(self, tensor: torch.Tensor):

@@ -15,4 +15,5 @@ class FP32(CompressionAlgorithmBase):
 
     @torch.no_grad()
     def __call__(self, tensor: torch.Tensor):
+        self.log_ratio(32, 16)
         return tensor
