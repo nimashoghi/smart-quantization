@@ -73,7 +73,6 @@ class BaseModule(pl.LightningModule):
             pass
         return super(BaseModule, self).training_step_end(*args, **kwargs)
 
-    @abstractmethod
     def loss_function(self, outputs, ground_truth):
         raise Exception("Not implemented")
 

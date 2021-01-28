@@ -146,5 +146,5 @@ class GLUEDataModule(LightningDataModule):
         )
 
         return features, torch.tensor(
-            [element["label"] for element in batch], dtype=torch.long
+            [element["label"] for element in batch], dtype=torch.float
         )
