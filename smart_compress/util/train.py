@@ -1,17 +1,11 @@
 import inspect
 from argparse import ArgumentParser
-from enum import Enum, auto
 
-from argparse_utils import enum_action, mapping_action
+from argparse_utils import mapping_action
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
 from smart_compress.util.pytorch.autograd import register_autograd_module
 from smart_compress.util.pytorch.hooks import register_global_hooks
-
-
-class CompressionHookMethod(Enum):
-    AUTOGRAD = auto()
-    GLOBAL_HOOK = auto()
 
 
 def init_model_from_args():
@@ -60,9 +54,11 @@ def init_model_from_args():
         dest="compression_cls",
     )
     parser.add_argument(
-        "--compression_hook_method",
-        action=enum_action(CompressionHookMethod, str.lower),
-        default=CompressionHookMethod.AUTOGRAD,
+        "--compression_hook_fn",
+        action=mapping_action(
+            dict(autograd=register_autograd_module, global_hook=register_global_hooks)
+        ),
+        default="autograd",
     )
     parser.add_argument(
         "--no_compress_forward",
@@ -130,6 +126,9 @@ def init_model_from_args():
                 or value.__module__ == str.__class__.__module__
                 else f"{value.__module__}.{value.__name__}",
             )
+        elif name.endswith("_fn"):
+            assert inspect.isfunction(value)
+            setattr(args, f"{name}_name", value.__name__)
 
     compression = args.compression_cls(args) if args.compress else None
     model = args.model_cls(compression=compression, **vars(args))
@@ -137,11 +136,6 @@ def init_model_from_args():
     data = args.dataset_cls(model.hparams)
 
     if model.hparams.compress:
-        if model.hparams.compression_hook_method == CompressionHookMethod.AUTOGRAD:
-            model = register_autograd_module(model, compression, model.hparams)
-        elif model.hparams.compression_hook_method == CompressionHookMethod.GLOBAL_HOOK:
-            register_global_hooks(compression, model.hparams)
-        else:
-            raise Exception("Could not find compression_hook_method")
+        model = model.hparams.compression_hook_fn(model, compression, model.hparams)
 
     return model, trainer, data

@@ -3,7 +3,6 @@ from datetime import datetime
 
 import datasets
 import torch
-import torch.nn.functional as F
 from smart_compress.models.base import BaseModule
 from transformers.models.bert import BertForSequenceClassification, BertConfig
 
