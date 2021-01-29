@@ -1,10 +1,9 @@
 from argparse import ArgumentParser
 
-import torch.nn.functional as F
-from argparse_utils.mapping import mapping_action
 import pytorch_lightning.metrics.functional.classification as FMC
+from argparse_utils.mapping import mapping_action
 from smart_compress.models.base import BaseModule
-from torchvision.models import resnet18, resnet34, resnet50, resnet101, resnet152
+from smart_compress.models.pytorch.resnet import resnet18, resnet34, resnet50
 
 
 class ResNetModule(BaseModule):
@@ -16,18 +15,12 @@ class ResNetModule(BaseModule):
         parser.add_argument(
             "--resnet_model",
             action=mapping_action(
-                dict(
-                    resnet18=resnet18,
-                    resnet34=resnet34,
-                    resnet50=resnet50,
-                    resnet101=resnet101,
-                    resnet152=resnet152,
-                )
+                dict(resnet18=resnet18, resnet34=resnet34, resnet50=resnet50)
             ),
             default="resnet34",
             dest="resnet_model_fn",
         )
-        parser.add_argument("--output_size", default=10, type=int)
+        parser.add_argument("--num_classes", default=10, type=int)
         return parser
 
     def __init__(self, *args, **kwargs):
@@ -35,7 +28,7 @@ class ResNetModule(BaseModule):
 
         self.save_hyperparameters()
 
-        self.model = self.hparams.resnet_model_fn(num_classes=self.hparams.output_size)
+        self.model = self.hparams.resnet_model_fn(num_classes=self.hparams.num_classes)
 
     def forward(self, x):
         return self.model(x)
@@ -43,6 +36,6 @@ class ResNetModule(BaseModule):
     def accuracy_function(self, outputs, ground_truth):
         return dict(
             accuracy=FMC.accuracy(
-                outputs, ground_truth, num_classes=self.hparams.output_size
+                outputs, ground_truth, num_classes=self.hparams.num_classes
             )
         )

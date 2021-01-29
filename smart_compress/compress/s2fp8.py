@@ -28,7 +28,7 @@ class S2FP8(CompressionAlgorithmBase):
     def __call__(self, tensor: torch.Tensor):
         self.log_ratio(32, 8)
 
-        X = tensor
+        X = tensor.clone()
 
         X_abs = X.abs()
         X_abs_log2 = torch.where(

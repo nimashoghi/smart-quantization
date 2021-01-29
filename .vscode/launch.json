@@ -27,9 +27,9 @@
                 "--scheduler_type",
                 "multi_step",
                 "--compress",
-                "s2fp8",
+                "fp32",
                 "--name",
-                "s2fp8-[forward,backward,loss,weight,grad,momentum]",
+                "fp32-[forward,backward,loss,weight,grad,momentum]",
                 "--logdir",
                 "./lightning_logs_test"
             ],

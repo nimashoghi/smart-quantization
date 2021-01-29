@@ -165,7 +165,19 @@ def is_valid_layer_type(module, layer_types=DEFAULT_LAYER_TYPES):
         assert layer_type in LAYERS_TYPES.keys()
         lp_layer_types += LAYERS_TYPES[layer_type]
 
-    return type(module) in lp_layer_types
+    module_type = type(module)
+    if module_type in lp_layer_types:
+        return True
+
+    type_name = str(module_type)
+    if (
+        "smart_compress.models.pytorch." in type_name
+        or "torch.nn.modules.container." in type_name
+        or "torch.nn.modules.activation." in type_name
+    ):
+        return True
+
+    return False
 
 
 def float_quantize(x: torch.Tensor, exp: int, man: int, hparams):

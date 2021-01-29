@@ -1,23 +1,23 @@
 from abc import abstractmethod
 from argparse import ArgumentParser
-from typing import Optional, Union
+from typing import Optional
 
 from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader
 from torch.utils.data.dataloader import DataLoader
 from torchvision import transforms
 
-transform = transforms.Compose(
+test_transform = transforms.Compose(
     [
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261)),
     ]
 )
-test_transform = transforms.Compose(
+transform = transforms.Compose(
     [
         transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
-        transform,
+        test_transform,
     ]
 )
 

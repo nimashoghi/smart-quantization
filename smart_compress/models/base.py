@@ -24,7 +24,11 @@ def make_sgd_optimizer(parameters: Iterator[nn.Parameter], hparams: Namespace):
 
 
 def make_multistep_scheduler(optimizer: Optimizer, hparams: Namespace):
-    return MultiStepLR(optimizer, milestones=[100, 150, 200], gamma=0.1)
+    return MultiStepLR(
+        optimizer,
+        milestones=hparams.scheduler_milestones,
+        gamma=hparams.scheduler_gamma,
+    )
 
 
 class BaseModule(pl.LightningModule):
@@ -42,6 +46,13 @@ class BaseModule(pl.LightningModule):
             action=mapping_action(dict(multi_step=make_multistep_scheduler)),
             dest="make_scheduler_fn",
         ),
+        parser.add_argument("--scheduler_gamma", type=float, default=0.1)
+        parser.add_argument(
+            "--scheduler_milestones",
+            type=int,
+            nargs="+",
+            default=[100, 150, 200],
+        )
         parser.add_argument(
             "--learning_rate",
             type=float,
@@ -125,18 +136,18 @@ class BaseModule(pl.LightningModule):
     def training_step(self, batch, _batch_idx):
         labels, loss, outputs = self.calculate_loss(batch)
 
-        self.log("train_loss", loss)
+        self.log("train_loss", loss, on_epoch=True)
         for metric, value in self.accuracy_function(outputs, labels).items():
-            self.log(f"train_{metric}", value, prog_bar=True)
+            self.log(f"train_{metric}", value, on_epoch=True, prog_bar=True)
 
         return dict(loss=loss)
 
     def validation_step(self, batch, _batch_idx):
         labels, loss, outputs = self.calculate_loss(batch)
 
-        self.log("val_loss", loss)
+        self.log("val_loss", loss, on_epoch=True, prog_bar=True)
         for metric, value in self.accuracy_function(outputs, labels).items():
-            self.log(f"val_{metric}", value)
+            self.log(f"val_{metric}", value, on_epoch=True, prog_bar=True)
 
         return dict(loss=loss)
 
