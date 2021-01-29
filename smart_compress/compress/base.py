@@ -9,8 +9,8 @@ class CompressionAlgorithmBase:
     def add_argparse_args(parent_parser: ArgumentParser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument(
-            "--no_measure_compression_ratio",
-            action="store_false",
+            "--measure_compression_ratio",
+            action="store_true",
             dest="measure_compression_ratio",
         )
         return parser
