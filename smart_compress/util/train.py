@@ -1,5 +1,7 @@
 import inspect
+import sys
 from argparse import ArgumentParser
+from typing import List, Union
 
 from argparse_utils import mapping_action
 from pytorch_lightning import Trainer
@@ -8,7 +10,24 @@ from smart_compress.util.pytorch.autograd import register_autograd_module
 from smart_compress.util.pytorch.hooks import register_global_hooks
 
 
-def init_model_from_args():
+def add_arg_names(args):
+    for name, value in dict(**vars(args)).items():
+        if name.endswith("_cls"):
+            assert inspect.isclass(value)
+            setattr(
+                args,
+                f"{name}_name",
+                value.__name__
+                if value.__module__ is None
+                or value.__module__ == str.__class__.__module__
+                else f"{value.__module__}.{value.__name__}",
+            )
+        elif name.endswith("_fn"):
+            assert inspect.isfunction(value)
+            setattr(args, f"{name}_name", value.__name__)
+
+
+def init_model_from_args(argv: Union[str, List[str]] = sys.argv):
     from smart_compress.compress.bf16 import BF16
     from smart_compress.compress.fp8 import FP8
     from smart_compress.compress.fp16 import FP16
@@ -21,6 +40,9 @@ def init_model_from_args():
     from smart_compress.data.imdb import IMDBDataModule
     from smart_compress.models.bert import BertModule
     from smart_compress.models.resnet import ResNetModule
+
+    if type(argv) == str:
+        argv = argv.split(" ")
 
     parser = ArgumentParser()
     parser.add_argument(
@@ -93,7 +115,7 @@ def init_model_from_args():
     parser.add_argument("--name", required=False, type=str)
     parser.add_argument("--logdir", default="lightning_logs", type=str)
     parser = Trainer.add_argparse_args(parser)
-    args, _ = parser.parse_known_args()
+    args, _ = parser.parse_known_args(argv)
 
     if args.model_cls == BertModule:
         assert args.dataset_cls in (GLUEDataModule, IMDBDataModule)
@@ -106,7 +128,7 @@ def init_model_from_args():
     parser = args.model_cls.add_argparse_args(parser)
     parser = args.dataset_cls.add_argparse_args(parser)
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     trainer = Trainer.from_argparse_args(
         args,
         enable_pl_optimizer=True,
@@ -114,21 +136,7 @@ def init_model_from_args():
         terminate_on_nan=True,
     )
 
-    args_dict = dict(**vars(args))
-    for name, value in args_dict.items():
-        if name.endswith("_cls"):
-            assert inspect.isclass(value)
-            setattr(
-                args,
-                f"{name}_name",
-                value.__name__
-                if value.__module__ is None
-                or value.__module__ == str.__class__.__module__
-                else f"{value.__module__}.{value.__name__}",
-            )
-        elif name.endswith("_fn"):
-            assert inspect.isfunction(value)
-            setattr(args, f"{name}_name", value.__name__)
+    add_arg_names(args)
 
     compression = args.compression_cls(args) if args.compress else None
     model = args.model_cls(compression=compression, **vars(args))
