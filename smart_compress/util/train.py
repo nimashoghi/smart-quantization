@@ -111,8 +111,8 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
         dest="compress_momentum_vectors",
     )
     parser.add_argument(
-        "--no_compress_loss",
-        action="store_false",
+        "--compress_loss",
+        action="store_true",
         dest="compress_loss",
     )
     parser.add_argument("--name", required=False, type=str)

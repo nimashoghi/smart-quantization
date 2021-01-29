@@ -7,7 +7,10 @@ from smart_compress.compress.base import CompressionAlgorithmBase
 class FP32(CompressionAlgorithmBase):
     @staticmethod
     def add_argparse_args(parent_parser: ArgumentParser):
-        parser = ArgumentParser(parents=[parent_parser], add_help=False)
+        parser = ArgumentParser(
+            parents=[CompressionAlgorithmBase.add_argparse_args(parent_parser)],
+            add_help=False,
+        )
         return parser
 
     def __init__(self, hparams: Namespace):

@@ -4,6 +4,7 @@ from typing import Iterator
 
 import pytorch_lightning as pl
 import torch
+import torch.nn.functional as F
 from argparse_utils.mapping import mapping_action
 from smart_compress.util.pytorch.hooks import wrap_optimizer
 from torch import nn
@@ -85,7 +86,7 @@ class BaseModule(pl.LightningModule):
         return super(BaseModule, self).training_step_end(*args, **kwargs)
 
     def loss_function(self, outputs, ground_truth):
-        raise Exception("Not implemented")
+        return F.cross_entropy(outputs, ground_truth)
 
     def accuracy_function(self, outputs, ground_truth):
         return dict()
@@ -116,33 +117,26 @@ class BaseModule(pl.LightningModule):
         outputs = self(inputs)
         loss = self.loss_function(outputs, labels)
 
-        return labels, loss, outputs
-
-    def calculate_loss_with_compression(self, batch):
-        labels, loss, outputs = self.calculate_loss(batch)
-
         if self.hparams.compress_loss:
-            loss = self.compression(loss)
+            loss.data = self.compression(loss.data)
 
         return labels, loss, outputs
 
     def training_step(self, batch, _batch_idx):
         labels, loss, outputs = self.calculate_loss(batch)
 
-        self.log("train_loss", loss, on_step=True, on_epoch=True)
+        self.log("train_loss", loss)
         for metric, value in self.accuracy_function(outputs, labels).items():
-            self.log(
-                f"train_{metric}", value, on_step=True, on_epoch=True, prog_bar=True
-            )
+            self.log(f"train_{metric}", value, prog_bar=True)
 
         return dict(loss=loss)
 
     def validation_step(self, batch, _batch_idx):
         labels, loss, outputs = self.calculate_loss(batch)
 
-        self.log("val_loss", loss, on_step=True, on_epoch=True)
+        self.log("val_loss", loss)
         for metric, value in self.accuracy_function(outputs, labels).items():
-            self.log(f"val_{metric}", value, on_step=True, on_epoch=True)
+            self.log(f"val_{metric}", value)
 
         return dict(loss=loss)
 

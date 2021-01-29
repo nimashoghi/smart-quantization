@@ -35,15 +35,10 @@ class ResNetModule(BaseModule):
 
         self.save_hyperparameters()
 
-        self.model = self.hparams.resnet_model_fn()
-        modules = list(self.model.modules())
-        modules[-1].out_features = self.hparams.output_size
+        self.model = self.hparams.resnet_model_fn(num_classes=self.hparams.output_size)
 
     def forward(self, x):
         return self.model(x)
-
-    def loss_function(self, outputs, ground_truth):
-        return F.cross_entropy(outputs, ground_truth)
 
     def accuracy_function(self, outputs, ground_truth):
         return dict(
