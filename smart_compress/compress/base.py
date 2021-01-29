@@ -29,16 +29,8 @@ class CompressionAlgorithmBase:
         if not self.hparams.measure_compression_ratio:
             return
 
-        self.log(
-            f"compression_ratio", orig_size / new_size, on_epoch=True, prog_bar=True
-        )
+        self.log(f"compression_ratio", orig_size / new_size, prog_bar=True)
 
     @abstractmethod
     def __call__(self, tensor: torch.Tensor):
         raise Exception("Not implemented")
-
-    def __getstate__(self):
-        return (self.__class__.__name__, self.hparams)
-
-    def __setstate__(self, value):
-        _, self.hparams = value

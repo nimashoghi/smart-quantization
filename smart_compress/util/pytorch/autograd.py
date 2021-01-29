@@ -16,7 +16,7 @@ class Compressor(nn.Module):
                 if not forward:
                     return x
 
-                return compress_fn(x.clone())
+                return compress_fn(x)
 
             @staticmethod
             def backward(ctx, grad_output):

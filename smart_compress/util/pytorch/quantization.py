@@ -181,10 +181,12 @@ def is_valid_layer_type(module, layer_types=DEFAULT_LAYER_TYPES):
 
 
 def float_quantize(x: torch.Tensor, exp: int, man: int, hparams):
-    if hparams.precision == 16:
-        return_value = quantize(x.float(), exp, man, rounding="nearest")
+    is_16_bit = hparams.precision == 16
+
+    if is_16_bit:
+        return_value = quantize(x.float(), exp, man, rounding="stochastic")
     else:
-        return_value = quantize(x, exp, man, rounding="nearest")
+        return_value = quantize(x, exp, man, rounding="stochastic")
 
     if hparams.float_quantize_check_inf:
         global TORCH_FLOAT_EPS
@@ -192,7 +194,7 @@ def float_quantize(x: torch.Tensor, exp: int, man: int, hparams):
         should_be_inf = torch.abs(return_value - max_value) <= TORCH_FLOAT_EPS
         return_value[should_be_inf] = float("inf")
 
-    if hparams.precision == 16:
+    if is_16_bit:
         return_value = return_value.half()
 
     return return_value

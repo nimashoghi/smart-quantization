@@ -56,7 +56,7 @@ class BaseModule(pl.LightningModule):
         parser.add_argument(
             "--learning_rate",
             type=float,
-            default=1.0,
+            default=0.1,
         )
         parser.add_argument(
             "--weight_decay",
@@ -136,7 +136,7 @@ class BaseModule(pl.LightningModule):
     def training_step(self, batch, _batch_idx):
         labels, loss, outputs = self.calculate_loss(batch)
 
-        self.log("train_loss", loss, on_epoch=True)
+        self.log("train_loss", loss)
         for metric, value in self.accuracy_function(outputs, labels).items():
             self.log(f"train_{metric}", value, on_epoch=True, prog_bar=True)
 
@@ -145,7 +145,7 @@ class BaseModule(pl.LightningModule):
     def validation_step(self, batch, _batch_idx):
         labels, loss, outputs = self.calculate_loss(batch)
 
-        self.log("val_loss", loss, on_epoch=True, prog_bar=True)
+        self.log("val_loss", loss)
         for metric, value in self.accuracy_function(outputs, labels).items():
             self.log(f"val_{metric}", value, on_epoch=True, prog_bar=True)
 
