@@ -3,10 +3,12 @@ from argparse import ArgumentParser, Namespace
 from typing import Iterator
 
 import pytorch_lightning as pl
-from argparse_utils.mapping import mapping_action
 import torch
+from argparse_utils.mapping import mapping_action
 from smart_compress.util.pytorch.hooks import wrap_optimizer
 from torch import nn
+from torch.optim.lr_scheduler import MultiStepLR
+from torch.optim.optimizer import Optimizer
 
 
 def make_sgd_optimizer(parameters: Iterator[nn.Parameter], hparams: Namespace):
@@ -20,6 +22,10 @@ def make_sgd_optimizer(parameters: Iterator[nn.Parameter], hparams: Namespace):
     )
 
 
+def make_multistep_scheduler(optimizer: Optimizer, hparams: Namespace):
+    return MultiStepLR(optimizer, milestones=[100, 150, 200], gamma=0.1)
+
+
 class BaseModule(pl.LightningModule):
     @staticmethod
     def add_argparse_args(parent_parser):
@@ -31,14 +37,19 @@ class BaseModule(pl.LightningModule):
             dest="make_optimizer_fn",
         )
         parser.add_argument(
+            "--scheduler_type",
+            action=mapping_action(dict(multi_step=make_multistep_scheduler)),
+            dest="make_scheduler_fn",
+        ),
+        parser.add_argument(
             "--learning_rate",
             type=float,
-            default=1e-2,
+            default=1.0,
         )
         parser.add_argument(
             "--weight_decay",
             type=float,
-            default=1e-2,
+            default=0,
         )
         parser.add_argument(
             "--momentum",
@@ -88,6 +99,10 @@ class BaseModule(pl.LightningModule):
             or self.hparams.compress_momentum_vectors
         ):
             optimizer = wrap_optimizer(optimizer, self.compression, self.hparams)
+
+        if self.hparams.make_scheduler_fn:
+            scheduler = self.hparams.make_scheduler_fn(optimizer, self.hparams)
+            return [optimizer], [scheduler]
 
         return optimizer
 

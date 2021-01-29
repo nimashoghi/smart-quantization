@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 
 import torch.nn.functional as F
 from argparse_utils.mapping import mapping_action
+import pytorch_lightning.metrics.functional.classification as FMC
 from smart_compress.models.base import BaseModule
 from torchvision.models import resnet18, resnet34, resnet50, resnet101, resnet152
 
@@ -45,11 +46,8 @@ class ResNetModule(BaseModule):
         return F.cross_entropy(outputs, ground_truth)
 
     def accuracy_function(self, outputs, ground_truth):
-        _, predicted = outputs.topk(5, 1, largest=True, sorted=True)
-        count = ground_truth.size(0)
-        ground_truth = ground_truth.view(count, -1).expand_as(predicted)
-        correct = predicted.eq(ground_truth).float()
-        correct_5 = correct[:, :5].sum() / count
-        correct_1 = correct[:, :1].sum() / count
-
-        return dict(top5_accuracy=correct_5, top1_accuracy=correct_1)
+        return dict(
+            accuracy=FMC.accuracy(
+                outputs, ground_truth, num_classes=self.hparams.output_size
+            )
+        )

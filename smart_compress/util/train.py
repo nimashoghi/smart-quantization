@@ -12,8 +12,11 @@ from smart_compress.util.pytorch.hooks import register_global_hooks
 
 def add_arg_names(args):
     for name, value in dict(**vars(args)).items():
+        if value is None:
+            continue
+
         if name.endswith("_cls"):
-            assert inspect.isclass(value)
+            assert inspect.isclass(value), f"{name} is not a class"
             setattr(
                 args,
                 f"{name}_name",
@@ -23,11 +26,11 @@ def add_arg_names(args):
                 else f"{value.__module__}.{value.__name__}",
             )
         elif name.endswith("_fn"):
-            assert inspect.isfunction(value)
+            assert inspect.isfunction(value), f"{name} is not a function"
             setattr(args, f"{name}_name", value.__name__)
 
 
-def init_model_from_args(argv: Union[str, List[str]] = sys.argv):
+def init_model_from_args(argv: Union[None, str, List[str]] = None):
     from smart_compress.compress.bf16 import BF16
     from smart_compress.compress.fp8 import FP8
     from smart_compress.compress.fp16 import FP16
