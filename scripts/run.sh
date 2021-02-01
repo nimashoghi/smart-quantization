@@ -1,7 +1,7 @@
 #!/bin/bash
 
-LOGDIR="./lightning_logs_resnet_fixed_jan29"
+LOGDIR="./lightning_logs_inception_feb1"
 rm -rf "$LOGDIR"
 mkdir -p "$LOGDIR"
 
-pwsh ./scripts/train-resnet.ps1 --logdir $LOGDIR > "$LOGDIR/output.log" 2>&1
+pwsh ./scripts/train-inception.ps1 --logdir $LOGDIR > "$LOGDIR/output.log" 2>&1

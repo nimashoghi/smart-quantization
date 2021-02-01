@@ -1,5 +1,4 @@
 import inspect
-import sys
 from argparse import ArgumentParser
 from typing import List, Union
 
@@ -42,6 +41,7 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
     from smart_compress.data.glue import GLUEDataModule
     from smart_compress.data.imdb import IMDBDataModule
     from smart_compress.models.bert import BertModule
+    from smart_compress.models.inception import InceptionModule
     from smart_compress.models.resnet import ResNetModule
 
     if type(argv) == str:
@@ -50,7 +50,9 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
     parser = ArgumentParser()
     parser.add_argument(
         "--model",
-        action=mapping_action(dict(bert=BertModule, resnet=ResNetModule)),
+        action=mapping_action(
+            dict(bert=BertModule, inception=InceptionModule, resnet=ResNetModule)
+        ),
         default="resnet",
         help="model name",
         dest="model_cls",
@@ -120,9 +122,9 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
     parser = Trainer.add_argparse_args(parser)
     args, _ = parser.parse_known_args(argv)
 
-    if args.model_cls == BertModule:
+    if args.model_cls in (BertModule,):
         assert args.dataset_cls in (GLUEDataModule, IMDBDataModule)
-    elif args.model_cls == ResNetModule:
+    elif args.model_cls in (ResNetModule, InceptionModule):
         assert args.dataset_cls in (CIFAR10DataModule, CIFAR100DataModule)
     else:
         raise Exception("invalid model_cls")
