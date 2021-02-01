@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from argparse import ArgumentParser, Namespace
+from typing import Union
 
 import torch
 
@@ -23,14 +24,15 @@ class CompressionAlgorithmBase:
     def update_hparams(self, hparams: Namespace):
         self.hparams = hparams
 
-    def log_ratio(self, orig_size: float, new_size: float):
+    def log_ratio(self, tag: Union[str, None], orig_size: float, new_size: float):
         assert hasattr(self, "log")
 
         if not self.hparams.measure_compression_ratio:
             return
 
         self.log(f"compression_ratio", orig_size / new_size, prog_bar=True)
+        self.log(f"compression_ratio_{tag}", orig_size / new_size)
 
     @abstractmethod
-    def __call__(self, tensor: torch.Tensor):
+    def __call__(self, tensor: torch.Tensor, tag: str = None):
         raise Exception("Not implemented")

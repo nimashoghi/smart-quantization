@@ -15,11 +15,17 @@ from torch.utils.hooks import RemovableHandle
 def wrap_optimizer(optimizer, compress_fn, hparams: Namespace):
     kwargs = {}
     if hparams.compress_weights:
-        kwargs["weight_quant"] = compress_fn
+        kwargs["weight_quant"] = lambda *args, **kwargs: compress_fn(
+            *args, **kwargs, tag="optimizer_weight"
+        )
     if hparams.compress_gradients:
-        kwargs["grad_quant"] = compress_fn
+        kwargs["grad_quant"] = lambda *args, **kwargs: compress_fn(
+            *args, **kwargs, tag="optimizer_grad"
+        )
     if hparams.compress_momentum_vectors:
-        kwargs["momentum_quant"] = compress_fn
+        kwargs["momentum_quant"] = lambda *args, **kwargs: compress_fn(
+            *args, **kwargs, tag="optimizer_momentum"
+        )
 
     if len(kwargs.keys()) == 0:
         return optimizer
@@ -34,7 +40,7 @@ def _register_forward_hook(compress_fn, layer_types=DEFAULT_LAYER_TYPES):
         ):
             return None
 
-        return compress_fn(output)
+        return compress_fn(output, tag="forward_hook")
 
     return register_module_forward_hook(forward_hook)
 

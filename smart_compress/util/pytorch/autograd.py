@@ -16,7 +16,7 @@ class Compressor(nn.Module):
                 if not forward:
                     return x
 
-                return compress_fn(x)
+                return compress_fn(x, tag="forward_autograd")
 
             @staticmethod
             def backward(ctx, grad_output):
@@ -26,7 +26,7 @@ class Compressor(nn.Module):
                 if not ctx.needs_input_grad[0]:
                     return None
 
-                return compress_fn(grad_output)
+                return compress_fn(grad_output, tag="backward_autograd")
 
         self.compress_fn = CompressorAutoGradFn.apply
 

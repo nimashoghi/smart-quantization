@@ -67,7 +67,7 @@ class SmartFP(CompressionAlgorithmBase):
         return sample.mean(), sample.std(unbiased=False)
 
     @torch.no_grad()
-    def __call__(self, tensor: torch.Tensor):
+    def __call__(self, tensor: torch.Tensor, tag: str = None):
         orig_size = tensor.numel() * 32
         data = tensor.clone()
 
@@ -113,6 +113,6 @@ class SmartFP(CompressionAlgorithmBase):
             torch.sum(is_outlier) * self.hparams.num_bits_outlier
             + torch.sum(~is_outlier) * self.hparams.num_bits_main
         )
-        self.log_ratio(orig_size, new_size)
+        self.log_ratio(tag, orig_size, new_size)
 
         return data

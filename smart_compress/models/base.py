@@ -129,7 +129,7 @@ class BaseModule(pl.LightningModule):
         loss = self.loss_function(outputs, labels)
 
         if self.hparams.compress_loss:
-            loss.data = self.compression(loss.data)
+            loss.data = self.compression(loss.data, tag="loss")
 
         return labels, loss, outputs
 
