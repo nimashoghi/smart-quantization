@@ -25,10 +25,10 @@ class CompressionAlgorithmBase:
         self.hparams = hparams
 
     def log_ratio(self, tag: Union[str, None], orig_size: float, new_size: float):
-        assert hasattr(self, "log")
-
         if not self.hparams.measure_compression_ratio:
             return
+
+        assert hasattr(self, "log")
 
         self.log(f"compression_ratio", orig_size / new_size, prog_bar=True)
         self.log(f"compression_ratio_{tag}", orig_size / new_size)
