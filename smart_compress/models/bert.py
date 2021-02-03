@@ -13,7 +13,7 @@ class BertModule(BaseModule):
         parser = ArgumentParser(
             parents=[BaseModule.add_argparse_args(parent_parser)], add_help=False
         )
-        parser.add_argument("--num_labels", default=1, type=int)
+        parser.add_argument("--num_labels", default=2, type=int)
         parser.add_argument(
             "--pretrained_model_name", default="bert-base-uncased", type=str
         )
@@ -57,10 +57,7 @@ class BertModule(BaseModule):
         return labels, loss, outputs
 
     def accuracy_function(self, outputs, ground_truth):
-        if self.hparams.num_labels == 1:
-            preds = outputs.logits.squeeze()
-        else:
-            preds = torch.argmax(outputs.logits, axis=1)
+        preds = torch.argmax(outputs.logits, axis=1)
 
         return self.metric.compute(
             predictions=preds.detach().cpu().numpy(),

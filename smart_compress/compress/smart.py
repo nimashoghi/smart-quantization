@@ -14,7 +14,7 @@ class SmartFP(CompressionAlgorithmBase):
         parser.add_argument(
             "--num_samples",
             type=int,
-            default=25,
+            default=16,
             help="number of samples to use for mean/std_dev calculation",
         )
         parser.add_argument(
@@ -68,7 +68,13 @@ class SmartFP(CompressionAlgorithmBase):
 
     @torch.no_grad()
     def __call__(self, tensor: torch.Tensor, tag: str = None):
-        orig_size = tensor.numel() * 32
+        numel = tensor.numel()
+        orig_size = numel * 32
+        if numel < self.hparams.num_samples:
+            self.log_ratio(tag, orig_size, 32, 32)
+
+            return tensor
+
         data = tensor.clone()
 
         mean, std_dev = (
@@ -108,6 +114,9 @@ class SmartFP(CompressionAlgorithmBase):
 
         data.div_(ranges).sub_(scalars)
         data.mul_(std_dev).add_(mean)
+
+        if not data.isfinite().all():
+            print(f"{tag} is not finite")
 
         new_size = (
             torch.sum(is_outlier) * self.hparams.num_bits_outlier
