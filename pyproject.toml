@@ -17,6 +17,7 @@ scipy = "^1.5.4"
 sklearn = "^0.0"
 
 [tool.poetry.dev-dependencies]
+seaborn = "^0.11.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -12,20 +12,18 @@ from torch.nn.modules.module import register_module_forward_hook
 from torch.utils.hooks import RemovableHandle
 
 
+def _wrap_fn(fn, **kwargs_fn):
+    return lambda *args, **kwargs: fn(*args, **kwargs_fn, **kwargs)
+
+
 def wrap_optimizer(optimizer, compress_fn, hparams: Namespace):
     kwargs = {}
     if hparams.compress_weights:
-        kwargs["weight_quant"] = lambda *args, **kwargs: compress_fn(
-            *args, **kwargs, tag="optimizer_weight"
-        )
+        kwargs["weight_quant"] = _wrap_fn(compress_fn, tag="optimizer_weight")
     if hparams.compress_gradients:
-        kwargs["grad_quant"] = lambda *args, **kwargs: compress_fn(
-            *args, **kwargs, tag="optimizer_grad"
-        )
+        kwargs["grad_quant"] = _wrap_fn(compress_fn, tag="optimizer_grad")
     if hparams.compress_momentum_vectors:
-        kwargs["momentum_quant"] = lambda *args, **kwargs: compress_fn(
-            *args, **kwargs, tag="optimizer_momentum"
-        )
+        kwargs["momentum_quant"] = _wrap_fn(compress_fn, tag="optimizer_momentum")
 
     if len(kwargs.keys()) == 0:
         return optimizer

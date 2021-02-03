@@ -113,6 +113,6 @@ class SmartFP(CompressionAlgorithmBase):
             torch.sum(is_outlier) * self.hparams.num_bits_outlier
             + torch.sum(~is_outlier) * self.hparams.num_bits_main
         )
-        self.log_ratio(tag, orig_size, new_size)
+        self.log_size(tag, orig_size, new_size)
 
         return data

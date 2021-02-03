@@ -30,6 +30,7 @@ def add_arg_names(args):
 
 
 def init_model_from_args(argv: Union[None, str, List[str]] = None):
+    from smart_compress.compress.base import CompressionAlgorithmBase
     from smart_compress.compress.bf16 import BF16
     from smart_compress.compress.fp8 import FP8
     from smart_compress.compress.fp16 import FP16
@@ -40,6 +41,7 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
     from smart_compress.data.cifar100 import CIFAR100DataModule
     from smart_compress.data.glue import GLUEDataModule
     from smart_compress.data.imdb import IMDBDataModule
+    from smart_compress.models.base import BaseModule
     from smart_compress.models.bert import BertModule
     from smart_compress.models.inception import InceptionModule
     from smart_compress.models.resnet import ResNetModule
@@ -143,9 +145,14 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
 
     add_arg_names(args)
 
-    compression = args.compression_cls(args) if args.compress else None
-    model = args.model_cls(compression=compression, **vars(args))
+    compression: CompressionAlgorithmBase = (
+        args.compression_cls(args) if args.compress else None
+    )
+    model: BaseModule = args.model_cls(compression=compression, **vars(args))
     compression.log = lambda *args, **kwargs: model.log(*args, **kwargs)
+    compression.log_custom = lambda metrics: trainer.logger.log_metrics(
+        metrics, model.global_step
+    )
     data = args.dataset_cls(model.hparams)
 
     if model.hparams.compress:

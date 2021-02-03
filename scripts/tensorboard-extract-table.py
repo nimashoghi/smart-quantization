@@ -5,7 +5,7 @@ import pathlib
 import pandas as pd
 from tensorboard.backend.event_processing import event_accumulator
 
-SCALARS = ("val_accuracy", "val_loss")
+SCALARS = ("val_accuracy", "val_loss", "compression_ratio")
 # SCALARS = (
 #     "val_accuracy_correct_1_epoch",
 #     "val_accuracy_correct_5_epoch",
@@ -36,11 +36,18 @@ for events_file in files:
     print("===============================")
 
     for scalar_name in SCALARS:
-        df = pd.DataFrame(ea.Scalars(scalar_name))
-        value = df["value"].min() if "loss" in scalar_name else df["value"].max()
+        try:
+            df = pd.DataFrame(ea.Scalars(scalar_name))
+            value = df["value"].min() if "loss" in scalar_name else df["value"].max()
+            if "loss" in scalar_name:
+                value = df["value"].min()
+            elif "compression_ratio" in scalar_name:
+                value = df["value"].mean()
 
-        print(scalar_name, value)
-        data[name][scalar_name] = value
+            print(scalar_name, value)
+            data[name][scalar_name] = value
+        except:
+            pass
 
     print()
     print()

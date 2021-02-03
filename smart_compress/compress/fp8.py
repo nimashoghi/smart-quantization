@@ -26,5 +26,6 @@ class FP8(CompressionAlgorithmBase):
 
     @torch.no_grad()
     def __call__(self, tensor: torch.Tensor, tag: str = None):
-        self.log_ratio(tag, 32, 8)
+        self.log_ratio(tag, tensor.numel(), 32, 8)
+
         return float_quantize(tensor, exp=5, man=2, hparams=self.hparams)
