@@ -6,10 +6,20 @@ import torch
 
 
 @torch.no_grad()
-def _reduce_fx(tensors: List[torch.Tensor]):
+def _reduce_fx(tensors: Union[torch.Tensor, List[torch.Tensor]]):
     if isinstance(tensors, list):
-        tensors = torch.tensor(tensors, dtype=float)
+        if len(tensors) == 0:
+            return 0
+
+        if torch.is_tensor(tensors[0]):
+            return torch.sum(torch.stack(tensors))
+        else:
+            return sum(tensors)
     return torch.sum(tensors)
+
+
+def _convert_to_floats(d: Dict[str, Union[float, torch.Tensor]]):
+    return {key: float(value) for key, value in d.items()}
 
 
 class CompressionAlgorithmBase:
@@ -75,14 +85,16 @@ class CompressionAlgorithmBase:
         compression_ratio = orig_size / new_size
 
         self._log_scalars(
-            {
-                f"compression_ratio": compression_ratio,
-                f"compression_ratio_{tag}": compression_ratio,
-                f"new_size": new_size,
-                f"new_size_{tag}": new_size,
-                f"orig_size": orig_size,
-                f"orig_size_{tag}": orig_size,
-            },
+            _convert_to_floats(
+                {
+                    f"compression_ratio": compression_ratio,
+                    f"compression_ratio_{tag}": compression_ratio,
+                    f"new_size": new_size,
+                    f"new_size_{tag}": new_size,
+                    f"orig_size": orig_size,
+                    f"orig_size_{tag}": orig_size,
+                }
+            ),
             custom=tag.startswith("optimizer_"),
         )
 

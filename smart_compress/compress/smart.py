@@ -58,7 +58,7 @@ class SmartFP(CompressionAlgorithmBase):
         super(SmartFP, self).__init__(hparams)
 
     def _get_sample_mean_std(self, data: torch.Tensor):
-        numel = torch.tensor(data.numel(), dtype=torch.long)
+        numel = torch.tensor(data.numel(), dtype=torch.long, device=data.device)
         sample_indices = (
             torch.rand(torch.min(numel, self.hparams.num_samples)).mul(numel).long()
         )
