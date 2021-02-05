@@ -186,6 +186,7 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
     parser.add_argument("--no_add_tags", action="store_false", dest="add_tags")
     parser.add_argument("--name", required=False, type=str)
     parser.add_argument("--logdir", default="lightning_logs", type=str)
+    parser.add_argument("--git", action="store_true")
     parser = Trainer.add_argparse_args(parser)
     args, _ = parser.parse_known_args(argv)
 
@@ -208,7 +209,7 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
         args,
         enable_pl_optimizer=True,
         logger=_create_test_tube_logger(
-            args.logdir, name=args.name, create_git_tag=True
+            args.logdir, name=args.name, create_git_tag=args.git
         ),
         terminate_on_nan=True,
     )
