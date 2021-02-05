@@ -10,6 +10,19 @@ from smart_compress.util.pytorch.autograd import register_autograd_module
 from smart_compress.util.pytorch.hooks import register_global_hooks
 
 
+def _check_git():
+    import os
+
+    os.popen("git status -s").read()
+
+
+def _create_test_tube_logger(*args, **kwargs):
+    if "create_git_tag" in kwargs and kwargs["create_git_tag"]:
+        _check_git()
+
+    return TestTubeLogger(*args, **kwargs)
+
+
 def _default_name(
     args,
     data_structures=[
@@ -179,7 +192,9 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
     trainer = Trainer.from_argparse_args(
         args,
         enable_pl_optimizer=True,
-        logger=TestTubeLogger(args.logdir, name=args.name, create_git_tag=True),
+        logger=_create_test_tube_logger(
+            args.logdir, name=args.name, create_git_tag=True
+        ),
         terminate_on_nan=True,
     )
 
