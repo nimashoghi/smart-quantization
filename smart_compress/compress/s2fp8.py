@@ -32,7 +32,9 @@ class S2FP8(CompressionAlgorithmBase):
 
         X_abs = X.abs()
         X_abs_log2 = torch.where(
-            X_abs == 0, X_abs, torch.log2(X_abs, out=torch.empty_like(X_abs))
+            X_abs == 0,
+            X_abs,
+            torch.log2(X_abs, out=torch.empty_like(X_abs, device=tensor.device)),
         )
 
         mu = torch.mean(X_abs_log2)

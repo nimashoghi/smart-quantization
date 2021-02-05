@@ -31,6 +31,11 @@ def make_multistep_scheduler(optimizer: Optimizer, hparams: Namespace):
     )
 
 
+def _handle_value(key, value):
+    sum_ = sum(value)
+    return sum_ if "size" in key else sum_ / len(value)
+
+
 class BaseModule(pl.LightningModule):
     @staticmethod
     def add_argparse_args(parent_parser):
@@ -82,19 +87,27 @@ class BaseModule(pl.LightningModule):
 
         self.save_hyperparameters()
 
+        self._logs = {}
+
         if self.hparams.measure_average_grad_norm:
             self._grads = []
 
     def training_epoch_end(self, *args, **kwargs):
         if not self.hparams.measure_average_grad_norm:
-            return super(BaseModule, self).training_step_end(*args, **kwargs)
+            return super(BaseModule, self).training_epoch_end(*args, **kwargs)
 
         try:
             avg = torch.mean(torch.tensor(self._grads))
             print(f"AVERAGE: {avg}")
         except:
             pass
-        return super(BaseModule, self).training_step_end(*args, **kwargs)
+        return super(BaseModule, self).training_epoch_end(*args, **kwargs)
+
+    def log_custom(self, metrics: dict):
+        for key, value in metrics.items():
+            if key not in self._logs:
+                self._logs[key] = []
+            self._logs[key].append(value)
 
     def loss_function(self, outputs, ground_truth):
         return F.cross_entropy(outputs, ground_truth)
@@ -133,6 +146,23 @@ class BaseModule(pl.LightningModule):
 
         return labels, loss, outputs
 
+    def _handle_log_custom(self):
+        if len(self._logs) != 0:
+            d = {key: _handle_value(key, value) for key, value in self._logs.items()}
+            print(d)
+            self.log_dict(d)
+            self._logs.clear()
+
+    def training_step_end(self, outputs):
+        self._handle_log_custom()
+
+        return outputs
+
+    def validation_step_end(self, outputs):
+        self._handle_log_custom()
+
+        return outputs
+
     def training_step(self, batch, _batch_idx):
         labels, loss, outputs = self.calculate_loss(batch)
 
@@ -143,6 +173,7 @@ class BaseModule(pl.LightningModule):
         return dict(loss=loss)
 
     def validation_step(self, batch, _batch_idx):
+        self._handle_log_custom()
         labels, loss, outputs = self.calculate_loss(batch)
 
         self.log("val_loss", loss)

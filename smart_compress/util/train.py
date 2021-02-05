@@ -1,15 +1,49 @@
 import inspect
+import time
 from argparse import ArgumentParser
 from typing import List, Union
 
 from argparse_utils import mapping_action
 from pytorch_lightning import Trainer
-from pytorch_lightning.loggers.tensorboard import TensorBoardLogger
+from pytorch_lightning.loggers.test_tube import TestTubeLogger
 from smart_compress.util.pytorch.autograd import register_autograd_module
 from smart_compress.util.pytorch.hooks import register_global_hooks
 
 
-def add_arg_names(args):
+def _default_name(
+    args,
+    data_structures=[
+        "forward",
+        "backward",
+        "weights",
+        "gradients",
+        "momentum_vectors",
+        "loss",
+    ],
+):
+    tags = ",".join(
+        (
+            "enabled" if args.compress else "disabled",
+            *(
+                data_structure
+                for data_structure in data_structures
+                if getattr(args, f"compress_{data_structure}", False)
+            ),
+        )
+    )
+
+    return "-".join(
+        (
+            args.compression_cls.__name__,
+            args.model_cls.__name__.replace("module", ""),
+            args.dataset_cls.__name__.replace("datamodule", ""),
+            tags,
+            time.strftime("%Y%m%d_%H%M%S"),
+        )
+    ).lower()
+
+
+def _add_arg_names(args):
     for name, value in dict(**vars(args)).items():
         if value is None:
             continue
@@ -27,6 +61,8 @@ def add_arg_names(args):
         elif name.endswith("_fn"):
             assert inspect.isfunction(value), f"{name} is not a function"
             setattr(args, f"{name}_name", value.__name__)
+
+    return args
 
 
 def init_model_from_args(argv: Union[None, str, List[str]] = None):
@@ -115,10 +151,11 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
         dest="compress_momentum_vectors",
     )
     parser.add_argument(
-        "--compress_loss",
-        action="store_true",
+        "--no_compress_loss",
+        action="store_false",
         dest="compress_loss",
     )
+    parser.add_argument("--no_add_tags", action="store_false", dest="add_tags")
     parser.add_argument("--name", required=False, type=str)
     parser.add_argument("--logdir", default="lightning_logs", type=str)
     parser = Trainer.add_argparse_args(parser)
@@ -136,23 +173,22 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
     parser = args.dataset_cls.add_argparse_args(parser)
 
     args = parser.parse_args(argv)
+    args = _add_arg_names(args)
+    args.name = _default_name(args) if args.name is None else args.name
+
     trainer = Trainer.from_argparse_args(
         args,
         enable_pl_optimizer=True,
-        logger=TensorBoardLogger(args.logdir, name=args.name),
+        logger=TestTubeLogger(args.logdir, name=args.name, create_git_tag=True),
         terminate_on_nan=True,
     )
-
-    add_arg_names(args)
 
     compression: CompressionAlgorithmBase = (
         args.compression_cls(args) if args.compress else None
     )
     model: BaseModule = args.model_cls(compression=compression, **vars(args))
     compression.log = lambda *args, **kwargs: model.log(*args, **kwargs)
-    compression.log_custom = lambda metrics: trainer.logger.log_metrics(
-        metrics, model.global_step
-    )
+    compression.log_custom = lambda metrics: model.log_custom(metrics)
     data = args.dataset_cls(model.hparams)
 
     if model.hparams.compress:

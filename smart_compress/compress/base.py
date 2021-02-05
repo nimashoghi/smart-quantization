@@ -45,7 +45,7 @@ class CompressionAlgorithmBase:
         self.hparams = hparams
 
     def _log_scalars(self, scalars: Dict[str, float], custom=False):
-        if custom:
+        if custom and self.log_custom is not None:
             self.log_custom(scalars)
             return
 

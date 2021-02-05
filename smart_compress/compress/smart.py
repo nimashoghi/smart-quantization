@@ -60,7 +60,9 @@ class SmartFP(CompressionAlgorithmBase):
     def _get_sample_mean_std(self, data: torch.Tensor):
         numel = torch.tensor(data.numel(), dtype=torch.long, device=data.device)
         sample_indices = (
-            torch.rand(torch.min(numel, self.hparams.num_samples)).mul(numel).long()
+            torch.rand(torch.min(numel, self.hparams.num_samples), device=data.device)
+            .mul(numel)
+            .long()
         )
         sample = data.view(-1)[sample_indices]
 
@@ -107,7 +109,10 @@ class SmartFP(CompressionAlgorithmBase):
         data.add_(scalars).mul_(ranges)
 
         if self.hparams.stochastic_rounding:
-            data[(data - torch.floor(data)) >= torch.rand_like(data)] += 1
+            data[
+                (data - torch.floor(data))
+                >= torch.rand_like(data, device=tensor.device)
+            ] += 1
             data.floor_()
         else:
             data.trunc_()
