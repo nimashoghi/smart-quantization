@@ -1,4 +1,5 @@
 import inspect
+import os
 import time
 from argparse import ArgumentParser
 from typing import Dict, List, Union
@@ -11,9 +12,23 @@ from smart_compress.util.pytorch.hooks import register_global_hooks
 
 
 def _check_git():
-    import os
+    content = os.popen("git status -s").read().strip()
+    if content:
+        print("======================")
+        print(
+            "You have selected to save a git tag for the code, but for this to work, you must commit all your changes first!"
+        )
+        print("======================")
+        print()
 
-    os.popen("git status -s").read()
+        user_input = None
+        while user_input not in ("y", "n"):
+            user_input = input("RUN ANYWAY [Y|n]? ").lower()
+            if not user_input:
+                user_input = "y"
+
+        if user_input == "n":
+            raise RuntimeError()
 
 
 def _create_test_tube_logger(*args, **kwargs):
