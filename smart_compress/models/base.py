@@ -87,8 +87,6 @@ class BaseModule(pl.LightningModule):
 
         self.save_hyperparameters()
 
-        self._logs = {}
-
         if self.hparams.measure_average_grad_norm:
             self._grads = []
 
@@ -102,12 +100,6 @@ class BaseModule(pl.LightningModule):
         except:
             pass
         return super(BaseModule, self).training_epoch_end(*args, **kwargs)
-
-    def log_custom(self, metrics: dict):
-        for key, value in metrics.items():
-            if key not in self._logs:
-                self._logs[key] = []
-            self._logs[key].append(value)
 
     def loss_function(self, outputs, ground_truth):
         return F.cross_entropy(outputs, ground_truth)
@@ -146,23 +138,6 @@ class BaseModule(pl.LightningModule):
 
         return labels, loss, outputs
 
-    def _handle_log_custom(self):
-        if len(self._logs) != 0:
-            d = {key: _handle_value(key, value) for key, value in self._logs.items()}
-            print(d)
-            self.log_dict(d)
-            self._logs.clear()
-
-    def training_step_end(self, outputs):
-        self._handle_log_custom()
-
-        return outputs
-
-    def validation_step_end(self, outputs):
-        self._handle_log_custom()
-
-        return outputs
-
     def training_step(self, batch, _batch_idx):
         labels, loss, outputs = self.calculate_loss(batch)
 
@@ -173,7 +148,6 @@ class BaseModule(pl.LightningModule):
         return dict(loss=loss)
 
     def validation_step(self, batch, _batch_idx):
-        self._handle_log_custom()
         labels, loss, outputs = self.calculate_loss(batch)
 
         self.log("val_loss", loss)

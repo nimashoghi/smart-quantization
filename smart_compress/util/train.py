@@ -1,7 +1,7 @@
 import inspect
 import time
 from argparse import ArgumentParser
-from typing import List, Union
+from typing import Dict, List, Union
 
 from argparse_utils import mapping_action
 from pytorch_lightning import Trainer
@@ -187,9 +187,16 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
         args.compression_cls(args) if args.compress else None
     )
     model: BaseModule = args.model_cls(compression=compression, **vars(args))
-    compression.log = lambda *args, **kwargs: model.log(*args, **kwargs)
-    compression.log_custom = lambda metrics: model.log_custom(metrics)
     data = args.dataset_cls(model.hparams)
+
+    def log_custom(metrics: Dict[str, float]):
+        if not trainer.logger_connector.should_update_logs and not trainer.fast_dev_run:
+            return
+
+        trainer.logger.agg_and_log_metrics(metrics, model.global_step)
+
+    compression.log = lambda *args, **kwargs: model.log(*args, **kwargs)
+    compression.log_custom = log_custom
 
     if model.hparams.compress:
         model = model.hparams.compression_hook_fn(model, compression, model.hparams)
