@@ -51,11 +51,14 @@ def _default_name(
 ):
     tags = ",".join(
         (
-            "enabled" if args.compress else "disabled",
             *(
-                data_structure
-                for data_structure in data_structures
-                if getattr(args, f"compress_{data_structure}", False)
+                (
+                    data_structure
+                    for data_structure in data_structures
+                    if getattr(args, f"compress_{data_structure}", False)
+                )
+                if args.compress
+                else ()
             ),
         )
     )
@@ -63,9 +66,10 @@ def _default_name(
     return "-".join(
         (
             args.compression_cls.__name__,
-            args.model_cls.__name__.replace("module", ""),
-            args.dataset_cls.__name__.replace("datamodule", ""),
+            args.model_cls.__name__.lower().replace("module", ""),
+            args.dataset_cls.__name__.lower().replace("datamodule", ""),
             tags,
+            args.tags or "",
             time.strftime("%Y%m%d_%H%M%S"),
         )
     ).lower()
@@ -187,6 +191,7 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
     parser.add_argument("--name", required=False, type=str)
     parser.add_argument("--logdir", default="lightning_logs", type=str)
     parser.add_argument("--git", action="store_true")
+    parser.add_argument("--tags", required=False, type=str)
     parser = Trainer.add_argparse_args(parser)
     args, _ = parser.parse_known_args(argv)
 
@@ -203,7 +208,10 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
 
     args = parser.parse_args(argv)
     args = _add_arg_names(args)
-    args.name = _default_name(args) if args.name is None else args.name
+    if not args.name:
+        args.name = _default_name(args)
+    elif args.tags:
+        args.name += f"-{args.tags}"
 
     trainer = Trainer.from_argparse_args(
         args,
