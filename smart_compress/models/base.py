@@ -12,6 +12,23 @@ from torch.optim.lr_scheduler import MultiStepLR
 from torch.optim.optimizer import Optimizer
 
 
+def make_adam_optimizer(parameters: Iterator[nn.Parameter], hparams: Namespace):
+    from torch.optim import Adam
+
+    beta_args = (
+        dict(betas=(hparams.beta1, hparams.beta2))
+        if hparams.beta1 and hparams.beta2
+        else dict()
+    )
+
+    return Adam(
+        parameters,
+        lr=hparams.learning_rate,
+        weight_decay=hparams.weight_decay,
+        **beta_args,
+    )
+
+
 def make_sgd_optimizer(parameters: Iterator[nn.Parameter], hparams: Namespace):
     from torch.optim import SGD
 
@@ -31,18 +48,15 @@ def make_multistep_scheduler(optimizer: Optimizer, hparams: Namespace):
     )
 
 
-def _handle_value(key, value):
-    sum_ = sum(value)
-    return sum_ if "size" in key else sum_ / len(value)
-
-
 class BaseModule(pl.LightningModule):
     @staticmethod
     def add_argparse_args(parent_parser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument(
             "--optimizer_type",
-            action=mapping_action(dict(sgd=make_sgd_optimizer)),
+            action=mapping_action(
+                dict(adam=make_adam_optimizer, sgd=make_sgd_optimizer)
+            ),
             default="sgd",
             dest="make_optimizer_fn",
         )
@@ -58,21 +72,11 @@ class BaseModule(pl.LightningModule):
             nargs="+",
             default=[100, 150, 200],
         )
-        parser.add_argument(
-            "--learning_rate",
-            type=float,
-            default=0.1,
-        )
-        parser.add_argument(
-            "--weight_decay",
-            type=float,
-            default=0,
-        )
-        parser.add_argument(
-            "--momentum",
-            type=float,
-            default=0.9,
-        )
+        parser.add_argument("--learning_rate", type=float, default=0.1)
+        parser.add_argument("--weight_decay", type=float, default=0)
+        parser.add_argument("--momentum", type=float, default=0.9)
+        parser.add_argument("--beta1", type=float)
+        parser.add_argument("--beta2", type=float)
         parser.add_argument("--measure_average_grad_norm", action="store_true")
         return parser
 

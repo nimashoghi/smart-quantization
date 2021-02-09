@@ -3,8 +3,8 @@ from datetime import datetime
 
 import datasets
 import torch
-from smart_compress.models.base import BaseModule
-from transformers.models.bert import BertForSequenceClassification, BertConfig
+from smart_compress.models.base import BaseModule, make_adam_optimizer
+from transformers.models.bert import BertConfig, BertForSequenceClassification
 
 
 class BertModule(BaseModule):
@@ -19,6 +19,13 @@ class BertModule(BaseModule):
         )
         parser.add_argument("--freeze", action="store_true", dest="freeze")
         parser.add_argument("--use_pretrained", action="store_true")
+        parser.set_defaults(
+            learning_rate=1e-4,
+            beta1=0.9,
+            beta2=0.999,
+            weight_decay=0.01,
+            make_optimizer_fn=make_adam_optimizer,
+        )
         return parser
 
     def __init__(self, *args, **kwargs):
