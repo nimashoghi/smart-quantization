@@ -1,3 +1,4 @@
+#%%
 from argparse import ArgumentParser
 from typing import Optional
 
@@ -55,6 +56,7 @@ class IMDBDataModule(LightningDataModule):
                 attention_mask=input["attention_mask"],
             ),
             output,
+            batch,
         )
 
     def setup(self, stage: Optional[str]):
@@ -99,3 +101,23 @@ class IMDBDataModule(LightningDataModule):
             pin_memory=True,
             collate_fn=self.batch_collate,
         )
+
+
+# %%
+from argparse import Namespace
+from transformers.models.bert import BertTokenizer
+
+
+hparams = Namespace(
+    batch_size=1,
+    val_batch_size=1,
+    tokenizer_cls=BertTokenizer,
+    pretrained_model_name="bert-base-uncased",
+    max_input_length=512,
+)
+datamodule = IMDBDataModule(hparams)
+datamodule.setup("fit")
+dl = datamodule.train_dataloader()
+
+# %%
+next(iter(dl))
