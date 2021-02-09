@@ -13,7 +13,10 @@ from torch.utils.hooks import RemovableHandle
 
 
 def _wrap_fn(fn, **kwargs_fn):
-    return lambda *args, **kwargs: fn(*args, **kwargs_fn, **kwargs)
+    def wrapped(*args, **kwargs):
+        return fn(*args, **kwargs_fn, **kwargs)
+
+    return wrapped
 
 
 def wrap_optimizer(optimizer, compress_fn, hparams: Namespace):

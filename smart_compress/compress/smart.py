@@ -52,6 +52,7 @@ class SmartFP(CompressionAlgorithmBase):
             default=2.5,
             help="max std dev for outliers (everything else is clamped to this)",
         )
+        parser.add_argument("--min_size", type=int, default=8)
         return parser
 
     def __init__(self, hparams: Namespace):
@@ -66,24 +67,28 @@ class SmartFP(CompressionAlgorithmBase):
         )
         sample = data.view(-1)[sample_indices]
 
-        return sample.mean(), sample.std(unbiased=False)
+        return sample.mean().type_as(data), sample.std(unbiased=False).type_as(data)
 
     @torch.no_grad()
     def __call__(self, tensor: torch.Tensor, tag: str = None):
         numel = tensor.numel()
         orig_size = numel * 32
-        if numel < self.hparams.num_samples:
+        if numel < self.hparams.min_size:
             self.log_ratio(tag, orig_size, 32, 32)
 
             return tensor
 
-        data = tensor.clone()
+        data = tensor.clone().type_as(tensor)
+        # data = tensor.clone().type_as(tensor).contiguous().flatten()
 
         mean, std_dev = (
-            (data.mean(), data.std())
+            (data.mean().type_as(data), data.std().type_as(data))
             if not self.hparams.use_sample_stats
             else self._get_sample_mean_std(data, self.hparams)
         )
+
+        if std_dev == 0:  # uniform dataset
+            std_dev = torch.ones_like(std_dev).type_as(std_dev)
 
         clamped_range = (1e-4, 1e4) if self.hparams.precision == 16 else (1e-38, 1e38)
         std_dev.clamp_(*clamped_range)
@@ -110,9 +115,9 @@ class SmartFP(CompressionAlgorithmBase):
 
         if self.hparams.stochastic_rounding:
             data[
-                (data - torch.floor(data))
-                >= torch.rand_like(data, device=tensor.device)
-            ] += 1
+                (data - data.floor().type_as(data))
+                >= torch.rand_like(data, device=data.device).type_as(data)
+            ] += 1.0
             data.floor_()
         else:
             data.trunc_()
@@ -129,4 +134,4 @@ class SmartFP(CompressionAlgorithmBase):
         )
         self.log_size(tag, orig_size, new_size)
 
-        return data
+        return data.view_as(tensor)
