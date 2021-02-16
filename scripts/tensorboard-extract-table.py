@@ -5,7 +5,7 @@ import pathlib
 import pandas as pd
 from tensorboard.backend.event_processing import event_accumulator
 
-SCALARS = ("val_accuracy", "val_loss", "compression_ratio")
+SCALARS = ("train_loss", "val_loss", "val_accuracy", "compression_ratio")
 # SCALARS = (
 #     "val_accuracy_correct_1_epoch",
 #     "val_accuracy_correct_5_epoch",
