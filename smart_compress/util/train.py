@@ -1,5 +1,4 @@
 import inspect
-import os
 import time
 from argparse import ArgumentParser
 from typing import Dict, List, Union
@@ -9,33 +8,6 @@ from pytorch_lightning import Trainer
 from pytorch_lightning.loggers.test_tube import TestTubeLogger
 from smart_compress.util.pytorch.autograd import register_autograd_module
 from smart_compress.util.pytorch.hooks import register_global_hooks
-
-
-def _check_git():
-    content = os.popen("git status -s").read().strip()
-    if content:
-        print("======================")
-        print(
-            "You have selected to save a git tag for the code, but for this to work, you must commit all your changes first!"
-        )
-        print("======================")
-        print()
-
-        user_input = None
-        while user_input not in ("y", "n"):
-            user_input = input("RUN ANYWAY [Y|n]? ").lower()
-            if not user_input:
-                user_input = "y"
-
-        if user_input == "n":
-            raise RuntimeError()
-
-
-def _create_test_tube_logger(*args, **kwargs):
-    if "create_git_tag" in kwargs and kwargs["create_git_tag"]:
-        _check_git()
-
-    return TestTubeLogger(*args, **kwargs)
 
 
 def _default_name(
@@ -216,9 +188,7 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
     trainer = Trainer.from_argparse_args(
         args,
         enable_pl_optimizer=True,
-        logger=_create_test_tube_logger(
-            args.logdir, name=args.name, create_git_tag=args.git
-        ),
+        logger=TestTubeLogger(args.logdir, name=args.name, create_git_tag=args.git),
         terminate_on_nan=True,
     )
 

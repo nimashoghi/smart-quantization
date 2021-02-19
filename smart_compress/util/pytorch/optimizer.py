@@ -63,7 +63,7 @@ class OptimLP(Optimizer):
             self.weight_acc = {}
             for group in self.param_groups:
                 for p in group["params"]:
-                    self.weight_acc[p] = p.detach().clone()
+                    self.weight_acc[p] = p.detach().clone().type_as(p)
 
     def _pre_closure(self):
         # quantize gradient

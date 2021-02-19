@@ -70,15 +70,15 @@ class SmartFP(CompressionAlgorithmBase):
         return sample.mean().type_as(data), sample.std(unbiased=False).type_as(data)
 
     @torch.no_grad()
-    def __call__(self, tensor: torch.Tensor, tag: str = None):
-        numel = tensor.numel()
+    def __call__(self, data: torch.Tensor, tag: str = None):
+        numel = data.numel()
         orig_size = numel * 32
         if numel < self.hparams.min_size:
             self.log_ratio(tag, orig_size, 32, 32)
 
-            return tensor
+            return data
 
-        data = tensor.clone().type_as(tensor)
+        # data = tensor.clone().type_as(tensor)
         # data = tensor.clone().type_as(tensor).contiguous().flatten()
 
         mean, std_dev = (
