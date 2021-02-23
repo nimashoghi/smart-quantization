@@ -134,4 +134,4 @@ class SmartFP(CompressionAlgorithmBase):
         )
         self.log_size(tag, orig_size, new_size)
 
-        return data.view_as(tensor)
+        return data
