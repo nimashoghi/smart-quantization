@@ -60,7 +60,7 @@ class GLUEDataModule(LightningDataModule):
         parser.add_argument(
             "--task_name",
             choices=list(GLUEDataModule.task_text_field_map.keys()),
-            default="mrpc",
+            default="sst2",
         )
         parser.add_argument(
             "--tokenizer_cls",

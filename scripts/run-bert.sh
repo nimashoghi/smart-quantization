@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LOGDIR="./lightning_logs_bert_feb22"
+LOGDIR="./lightning_logs_bert_sst2_feb23"
 rm -rf "$LOGDIR"
 mkdir -p "$LOGDIR"
 
