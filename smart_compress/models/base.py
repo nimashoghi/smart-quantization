@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from argparse import ArgumentParser, Namespace
-from typing import Iterator
+from typing import Iterator, Type, Union
 
 import pytorch_lightning as pl
 import torch
@@ -8,29 +8,47 @@ import torch.nn.functional as F
 from argparse_utils.mapping import mapping_action
 from smart_compress.util.pytorch.hooks import wrap_optimizer
 from torch import nn
+from torch.optim import SGD, Adam, AdamW
 from torch.optim.lr_scheduler import MultiStepLR
 from torch.optim.optimizer import Optimizer
 
 
-def make_adam_optimizer(parameters: Iterator[nn.Parameter], hparams: Namespace):
-    from torch.optim import Adam
-
+def _make_adam_optimizer_base(
+    cls: Union[Type[Adam], Type[AdamW]],
+    parameters: Iterator[nn.Parameter],
+    hparams: Namespace,
+):
     beta_args = (
         dict(betas=(hparams.beta1, hparams.beta2))
         if hparams.beta1 and hparams.beta2
         else dict()
     )
+    eps_args = dict(eps=hparams.epsilon) if hparams.epsilon else dict()
 
-    return Adam(
+    return cls(
         parameters,
         lr=hparams.learning_rate,
         weight_decay=hparams.weight_decay,
+        **eps_args,
         **beta_args,
     )
 
 
+def make_adam_optimizer(
+    parameters: Iterator[nn.Parameter],
+    hparams: Namespace,
+):
+    return _make_adam_optimizer_base(Adam, parameters, hparams)
+
+
+def make_adamw_optimizer(
+    parameters: Iterator[nn.Parameter],
+    hparams: Namespace,
+):
+    return _make_adam_optimizer_base(AdamW, parameters, hparams)
+
+
 def make_sgd_optimizer(parameters: Iterator[nn.Parameter], hparams: Namespace):
-    from torch.optim import SGD
 
     return SGD(
         parameters,
@@ -55,7 +73,11 @@ class BaseModule(pl.LightningModule):
         parser.add_argument(
             "--optimizer_type",
             action=mapping_action(
-                dict(adam=make_adam_optimizer, sgd=make_sgd_optimizer)
+                dict(
+                    adam=make_adam_optimizer,
+                    adamw=make_adamw_optimizer,
+                    sgd=make_sgd_optimizer,
+                )
             ),
             default="sgd",
             dest="make_optimizer_fn",
@@ -77,6 +99,7 @@ class BaseModule(pl.LightningModule):
         parser.add_argument("--momentum", type=float, default=0.9)
         parser.add_argument("--beta1", type=float)
         parser.add_argument("--beta2", type=float)
+        parser.add_argument("--epsilon", type=float)
         parser.add_argument("--measure_average_grad_norm", action="store_true")
         return parser
 

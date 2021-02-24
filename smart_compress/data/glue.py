@@ -41,16 +41,6 @@ class GLUEDataModule(LightningDataModule):
         "ax": 3,
     }
 
-    loader_columns = [
-        "datasets_idx",
-        "input_ids",
-        "token_type_ids",
-        "attention_mask",
-        "start_positions",
-        "end_positions",
-        "labels",
-    ]
-
     @staticmethod
     def add_argparse_args(parent_parser: ArgumentParser):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
@@ -60,7 +50,7 @@ class GLUEDataModule(LightningDataModule):
         parser.add_argument(
             "--task_name",
             choices=list(GLUEDataModule.task_text_field_map.keys()),
-            default="sst2",
+            default="wnli",
         )
         parser.add_argument(
             "--tokenizer_cls",
@@ -73,6 +63,7 @@ class GLUEDataModule(LightningDataModule):
         super(GLUEDataModule, self).__init__()
 
         self.hparams = hparams
+        self.hparams.num_labels = self.glue_task_num_labels[self.hparams.task_name]
 
         if self.hparams.val_batch_size is None:
             self.hparams.val_batch_size = max(self.hparams.batch_size // 4, 1)
@@ -81,50 +72,24 @@ class GLUEDataModule(LightningDataModule):
             self.hparams.pretrained_model_name
         )
         self.text_fields = self.task_text_field_map[self.hparams.task_name]
-        self.num_labels = self.glue_task_num_labels[self.hparams.task_name]
+
+        self.train_name = "train"
+        self.val_name = "validation"
+        self.test_name = "test"
+        if self.hparams.task_name == "mnli":
+            self.val_name = "validation_matched"
+            self.test_name = "test_matched"
 
     def setup(self, stage: Optional[str]):
         self.dataset = datasets.load_dataset("glue", self.hparams.task_name)
 
         if stage == "fit" or stage is None:
-            self.train_dataset = self.dataset["train"]
-            self.val_dataset = self.dataset["validation"]
+            self.train_dataset = self.dataset[self.train_name]
+            self.val_dataset = self.dataset[self.val_name]
         if stage == "test" or stage is None:
-            self.test_dataset = self.dataset["test"]
+            self.test_dataset = self.dataset[self.test_name]
 
-    def prepare_data(self):
-        datasets.load_dataset("glue", self.hparams.task_name)
-        self.hparams.tokenizer_cls.from_pretrained(self.hparams.pretrained_model_name)
-
-    def train_dataloader(self):
-        return DataLoader(
-            self.train_dataset,
-            batch_size=self.hparams.batch_size,
-            pin_memory=True,
-            num_workers=8,
-            shuffle=True,
-            collate_fn=self.collate_fn,
-        )
-
-    def val_dataloader(self):
-        return DataLoader(
-            self.val_dataset,
-            batch_size=self.hparams.val_batch_size,
-            pin_memory=True,
-            num_workers=8,
-            collate_fn=self.collate_fn,
-        )
-
-    def test_dataloader(self):
-        return DataLoader(
-            self.test_dataset,
-            batch_size=self.hparams.val_batch_size,
-            pin_memory=True,
-            num_workers=8,
-            collate_fn=self.collate_fn,
-        )
-
-    def collate_fn(self, batch):
+    def _collate_fn(self, batch):
         # Either encode single sentence or sentence pairs
         if len(self.text_fields) == 2:
             texts_or_text_pairs = [
@@ -147,4 +112,32 @@ class GLUEDataModule(LightningDataModule):
 
         return features, torch.tensor(
             [element["label"] for element in batch], dtype=torch.long
+        )
+
+    def train_dataloader(self):
+        return DataLoader(
+            self.train_dataset,
+            batch_size=self.hparams.batch_size,
+            pin_memory=True,
+            num_workers=8,
+            shuffle=True,
+            collate_fn=self._collate_fn,
+        )
+
+    def val_dataloader(self):
+        return DataLoader(
+            self.val_dataset,
+            batch_size=self.hparams.val_batch_size,
+            pin_memory=True,
+            num_workers=8,
+            collate_fn=self._collate_fn,
+        )
+
+    def test_dataloader(self):
+        return DataLoader(
+            self.test_dataset,
+            batch_size=self.hparams.val_batch_size,
+            pin_memory=True,
+            num_workers=8,
+            collate_fn=self._collate_fn,
         )

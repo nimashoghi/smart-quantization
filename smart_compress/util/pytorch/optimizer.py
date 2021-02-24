@@ -1,4 +1,5 @@
 from torch.optim import SGD, Adam, Optimizer
+from torch.optim.adamw import AdamW
 
 __all__ = ["OptimLP"]
 
@@ -34,7 +35,6 @@ class OptimLP(Optimizer):
         momentum_quant=None,
         acc_quant=None,
     ):
-        assert isinstance(optim, SGD) or isinstance(optim, Adam)
         super(OptimLP, self).__init__(
             optim.param_groups, optim.defaults
         )  # place holder
@@ -52,10 +52,13 @@ class OptimLP(Optimizer):
         self.acc_quant = acc_quant
 
         if isinstance(self.optim, SGD):
-            self.momentum_keys = ["momentum_buffer"]
-        elif isinstance(self.optim, Adam):
+            self.momentum_keys = [("momentum_buffer", dict())]
+        elif isinstance(self.optim, Adam) or isinstance(self.optim, AdamW):
             # TODO: support amsgrad
-            self.momentum_keys = ["exp_avg", "exp_avg_sq"]
+            self.momentum_keys = [
+                ("exp_avg", dict()),
+                ("exp_avg_sq", dict(all_positive=True)),
+            ]
         else:
             raise NotImplementedError("Only supporting Adam and SGD for now. ")
 
@@ -72,7 +75,7 @@ class OptimLP(Optimizer):
                 for p in group["params"]:
                     if not p.requires_grad or p.grad is None:
                         continue
-                    p.grad.data = self.grad_quant(p.grad.data * self.grad_scaling)
+                    p.grad.data = self.grad_quant(p.grad.data * self.grad_scaling).data
 
         # switch acc into weight before stepping
         if not self.acc_quant is None:
@@ -87,7 +90,7 @@ class OptimLP(Optimizer):
                 for p in group["params"]:
                     if not p.requires_grad or p.grad is None:
                         continue
-                    p.grad.data = self.grad_quant(p.grad.data * self.grad_scaling)
+                    p.grad.data = self.grad_quant(p.grad.data * self.grad_scaling).data
 
         # quantize weight from acc
         if not self.weight_quant is None:
@@ -105,8 +108,10 @@ class OptimLP(Optimizer):
                         continue
 
                     param_state = self.optim.state[p]
-                    for key in self.momentum_keys:
-                        param_state[key] = self.momentum_quant(param_state[key])
+                    for key, kwargs in self.momentum_keys:
+                        param_state[key].data = self.momentum_quant(
+                            param_state[key], **kwargs
+                        ).data
 
     def step(self, closure=None):
         """
