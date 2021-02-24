@@ -25,7 +25,7 @@ class BF16(CompressionAlgorithmBase):
         super(BF16, self).__init__(hparams)
 
     @torch.no_grad()
-    def __call__(self, tensor: torch.Tensor, tag: str = None):
+    def __call__(self, tensor: torch.Tensor, tag: str = None, **_):
         self.log_ratio(tag, tensor.numel(), 32, 16)
 
         return float_quantize(tensor, exp=8, man=7, hparams=self.hparams)

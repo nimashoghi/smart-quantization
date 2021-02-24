@@ -99,5 +99,5 @@ class CompressionAlgorithmBase:
         )
 
     @abstractmethod
-    def __call__(self, tensor: torch.Tensor, tag: str = None):
+    def __call__(self, tensor: torch.Tensor, tag: str = None, **_):
         raise Exception("Not implemented")
