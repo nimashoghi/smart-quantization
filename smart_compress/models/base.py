@@ -49,7 +49,6 @@ def make_adamw_optimizer(
 
 
 def make_sgd_optimizer(parameters: Iterator[nn.Parameter], hparams: Namespace):
-
     return SGD(
         parameters,
         lr=hparams.learning_rate,

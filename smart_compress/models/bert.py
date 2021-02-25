@@ -21,12 +21,6 @@ class BertModule(BaseModule):
         parser.add_argument(
             "--no_pretrained", action="store_false", dest="use_pretrained"
         )
-        parser.set_defaults(
-            make_optimizer_fn=make_adamw_optimizer,
-            learning_rate=2e-5,
-            weight_decay=0.0,
-            epsilon=1e-8,
-        )
         return parser
 
     def __init__(self, *args, **kwargs):
