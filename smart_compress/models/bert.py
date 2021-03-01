@@ -3,7 +3,7 @@ from datetime import datetime
 
 import datasets
 import torch
-from smart_compress.models.base import BaseModule, make_adamw_optimizer
+from smart_compress.models.base import BaseModule
 from transformers.models.bert import BertConfig, BertForSequenceClassification
 
 
