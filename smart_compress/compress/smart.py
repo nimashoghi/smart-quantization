@@ -1,6 +1,7 @@
 from argparse import ArgumentParser, Namespace
 
 import torch
+import torch.nn.functional as F
 from smart_compress.compress.base import CompressionAlgorithmBase
 
 
@@ -58,6 +59,17 @@ class SmartFP(CompressionAlgorithmBase):
     def __init__(self, hparams: Namespace):
         super(SmartFP, self).__init__(hparams)
 
+        self.range_outlier = ((2 ** (self.hparams.num_bits_outlier - 2)) - 1) / (
+            self.hparams.outlier_std_dev_threshold - self.hparams.main_std_dev_threshold
+        )
+        self.range_normal = (
+            (2 ** (self.hparams.num_bits_main - 2)) - 1
+        ) / self.hparams.main_std_dev_threshold
+
+        self.clamped_range = (
+            (1e-4, 1e4) if self.hparams.precision == 16 else (1e-38, 1e38)
+        )
+
     def _get_sample_mean_std(self, data: torch.Tensor):
         numel = torch.tensor(data.numel(), dtype=torch.long, device=data.device)
         sample_indices = (
@@ -67,7 +79,7 @@ class SmartFP(CompressionAlgorithmBase):
         )
         sample = data.view(-1)[sample_indices]
 
-        return sample.mean().type_as(data), sample.std(unbiased=False).type_as(data)
+        return sample.mean(), sample.std(unbiased=False)
 
     @torch.no_grad()
     def __call__(self, data: torch.Tensor, tag: str = None, all_positive=False, **_):
@@ -78,21 +90,17 @@ class SmartFP(CompressionAlgorithmBase):
 
             return data
 
-        dataog = data.clone()
-
         mean, std_dev = (
-            (data.mean().type_as(data), data.std().type_as(data))
+            (data.mean(), data.std())
             if not self.hparams.use_sample_stats
             else self._get_sample_mean_std(data, self.hparams)
         )
 
         if std_dev == 0:  # uniform dataset
-            std_dev = torch.ones_like(std_dev).type_as(std_dev)
+            std_dev = torch.ones_like(std_dev, device=data.device)
 
-        clamped_range = (1e-4, 1e4) if self.hparams.precision == 16 else (1e-38, 1e38)
-        std_dev.clamp_(*clamped_range)
-
-        data.sub_(mean).div_(std_dev)
+        data = (data - mean) / std_dev.clamp(*self.clamped_range)
+        # data.sub_(mean).div_(std_dev.clamp(*self.clamped_range))
         is_outlier_higher = data > self.hparams.main_std_dev_threshold
         is_outlier_lower = data < -self.hparams.main_std_dev_threshold
         is_outlier = is_outlier_higher | is_outlier_lower
@@ -100,35 +108,27 @@ class SmartFP(CompressionAlgorithmBase):
         scalars = (is_outlier_higher * -self.hparams.main_std_dev_threshold) + (
             is_outlier_lower * self.hparams.main_std_dev_threshold
         )
-        ranges = torch.where(
-            is_outlier,
-            ((2 ** (self.hparams.num_bits_outlier - 2)) - 1)  # -1 for tag, -1 for sign
-            / (
-                self.hparams.outlier_std_dev_threshold
-                - self.hparams.main_std_dev_threshold
-            ),
-            ((2 ** (self.hparams.num_bits_main - 2)) - 1)
-            / self.hparams.main_std_dev_threshold,
-        )
-        data.add_(scalars).mul_(ranges)
+        ranges = torch.where(is_outlier, self.range_outlier, self.range_normal)
+
+        data = (data + scalars) * ranges
 
         if self.hparams.stochastic_rounding:
-            data[
-                (data - data.floor().type_as(data))
-                >= torch.rand_like(data, device=data.device).type_as(data)
-            ] += 1.0
-            data.floor_()
-        else:
-            data.trunc_()
+            probs = torch.rand_like(data, device=data.device)
+            floored_data = data.floor()
+            fractions = data - floored_data
 
-        data.div_(ranges).sub_(scalars)
-        data.mul_(std_dev).add_(mean)
+            data = floored_data + F.relu((fractions - probs) + 0.5).round()
+        else:
+            data = data.trunc()
+
+        data = (data / ranges) - scalars
+        data = (data * std_dev) + mean
 
         if all_positive:
-            data.clamp_min_(0.0)
+            data = data.clamp_min(0.0)
 
-        if not data.isfinite().all():
-            print(f"{tag} is not finite")
+        # if not data.isfinite().all():
+        #     print(f"{tag} is not finite")
 
         new_size = (
             torch.sum(is_outlier) * self.hparams.num_bits_outlier
