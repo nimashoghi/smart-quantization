@@ -29,13 +29,10 @@ class S2FP8(CompressionAlgorithmBase):
         self.log_ratio(tag, tensor.numel(), 32, 8, overhead=64)
 
         X = tensor
+        signs = torch.sign(X)
 
         X_abs = X.abs()
-        X_abs_log2 = torch.where(
-            X_abs == 0.0,
-            X_abs,
-            torch.log2(X_abs, out=torch.empty_like(X_abs, device=tensor.device)),
-        )
+        X_abs_log2 = torch.where(X_abs == 0.0, X_abs, torch.log2(X_abs))
 
         mu = torch.mean(X_abs_log2)
         m = torch.max(X_abs_log2)
@@ -45,11 +42,7 @@ class S2FP8(CompressionAlgorithmBase):
 
         beta_pow2 = 2.0 ** beta
 
-        return (
-            float_quantize(
-                X_abs.pow_(alpha).mul_(beta_pow2), exp=5, man=2, hparams=self.hparams
-            )
-            .mul_(beta_pow2.reciprocal_())
-            .pow_(alpha.reciprocal_())
-            .mul_(torch.sign(X))
+        truncated = float_quantize(
+            X_abs.pow_(alpha).mul_(beta_pow2), exp=5, man=2, hparams=self.hparams
         )
+        return ((truncated * beta_pow2.reciprocal_()) ** alpha.reciprocal_()) * signs

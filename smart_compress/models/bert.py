@@ -58,8 +58,11 @@ class BertModule(BaseModule):
 
         return labels, loss, outputs
 
-    def accuracy_function(self, outputs, ground_truth):
-        preds = torch.argmax(outputs.logits, axis=1)
+    def accuracy_function(self, outputs: torch.Tensor, ground_truth: torch.Tensor):
+        if outputs.logits.dtype == torch.float:
+            preds = outputs.logits.view(-1)
+        else:
+            preds = torch.argmax(outputs.logits, axis=1)
 
         return self.metric.compute(
             predictions=preds.detach().cpu().numpy(),

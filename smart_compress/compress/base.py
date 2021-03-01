@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from argparse import ArgumentParser, Namespace
-from typing import Dict, List, Union
+from typing import Callable, Dict, List, Union
 
 import torch
 
@@ -72,12 +72,15 @@ class CompressionAlgorithmBase:
     def log_size(
         self,
         tag: Union[str, None],
-        orig_size: float,
-        new_size: float,
+        orig_size: Union[float, Callable[[], float]],
+        new_size: Union[float, Callable[[], float]],
         overhead=0,
     ):
         if not self.hparams.measure_compression_ratio:
             return
+
+        orig_size = orig_size() if callable(orig_size) else orig_size
+        new_size = new_size() if callable(new_size) else new_size
 
         assert hasattr(self, "log")
 

@@ -81,6 +81,13 @@ class SmartFP(CompressionAlgorithmBase):
 
         return sample.mean(), sample.std(unbiased=False)
 
+    def _round_stochastic(self, data: torch.Tensor):
+        probs = torch.rand_like(data, device=data.device)
+        floored_data = data.floor()
+        fractions = data - floored_data
+
+        return floored_data + F.relu((fractions - probs) + 0.5).round()
+
     @torch.no_grad()
     def __call__(self, data: torch.Tensor, tag: str = None, all_positive=False, **_):
         numel = data.numel()
@@ -100,7 +107,6 @@ class SmartFP(CompressionAlgorithmBase):
             std_dev = torch.ones_like(std_dev, device=data.device)
 
         data = (data - mean) / std_dev.clamp(*self.clamped_range)
-        # data.sub_(mean).div_(std_dev.clamp(*self.clamped_range))
         is_outlier_higher = data > self.hparams.main_std_dev_threshold
         is_outlier_lower = data < -self.hparams.main_std_dev_threshold
         is_outlier = is_outlier_higher | is_outlier_lower
@@ -113,11 +119,7 @@ class SmartFP(CompressionAlgorithmBase):
         data = (data + scalars) * ranges
 
         if self.hparams.stochastic_rounding:
-            probs = torch.rand_like(data, device=data.device)
-            floored_data = data.floor()
-            fractions = data - floored_data
-
-            data = floored_data + F.relu((fractions - probs) + 0.5).round()
+            data = self._round_stochastic(data)
         else:
             data = data.trunc()
 
@@ -127,10 +129,7 @@ class SmartFP(CompressionAlgorithmBase):
         if all_positive:
             data = data.clamp_min(0.0)
 
-        # if not data.isfinite().all():
-        #     print(f"{tag} is not finite")
-
-        new_size = (
+        new_size = lambda: (
             torch.sum(is_outlier) * self.hparams.num_bits_outlier
             + torch.sum(~is_outlier) * self.hparams.num_bits_main
         )
