@@ -23,7 +23,7 @@
                 "--dataset",
                 "glue",
                 "--task_name",
-                "mrpc",
+                "cola",
                 "--batch_size",
                 "10",
                 "--val_batch_size",

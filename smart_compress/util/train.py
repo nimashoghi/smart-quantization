@@ -165,6 +165,7 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
     parser.add_argument("--git", action="store_true")
     parser.add_argument("--tags", required=False, type=str)
     parser = Trainer.add_argparse_args(parser)
+    parser.set_defaults(terminate_on_nan=True)
     args, _ = parser.parse_known_args(argv)
 
     if args.model_cls in (BertModule,):
@@ -187,9 +188,7 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
 
     trainer = Trainer.from_argparse_args(
         args,
-        enable_pl_optimizer=True,
         logger=TestTubeLogger(args.logdir, name=args.name, create_git_tag=args.git),
-        terminate_on_nan=True,
     )
 
     compression: CompressionAlgorithmBase = (

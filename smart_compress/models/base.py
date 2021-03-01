@@ -102,12 +102,7 @@ class BaseModule(pl.LightningModule):
         parser.add_argument("--beta2", type=float)
         parser.add_argument("--epsilon", type=float)
         parser.add_argument("--measure_average_grad_norm", action="store_true")
-        parser.add_argument(
-            "--no_weight_decay_layers",
-            type=str,
-            nargs="+",
-            default=["bias", "LayerNorm.weight"],
-        )
+        parser.add_argument("--no_weight_decay_layers", type=str, nargs="+", default=[])
         return parser
 
     def __init__(self, *args, compression=None, **kwargs):

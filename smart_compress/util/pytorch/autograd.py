@@ -1,5 +1,6 @@
 from argparse import Namespace
 
+import torch
 import torch.nn as nn
 from smart_compress.models.base import BaseModule
 from smart_compress.util.pytorch.quantization import is_valid_layer_type
@@ -12,11 +13,14 @@ class Compressor(nn.Module):
 
         class CompressorAutoGradFn(Function):
             @staticmethod
-            def forward(ctx, x):
+            def forward(ctx, x: torch.Tensor):
                 if not forward:
                     return x
 
-                return compress_fn(x.clone().type_as(x), tag="forward_autograd")
+                return compress_fn(
+                    x.clone(memory_format=torch.contiguous_format),
+                    tag="forward_autograd",
+                )
 
             @staticmethod
             def backward(ctx, grad_output):
@@ -27,7 +31,8 @@ class Compressor(nn.Module):
                     return None
 
                 return compress_fn(
-                    grad_output.clone().type_as(grad_output), tag="backward_autograd"
+                    grad_output.clone(memory_format=torch.contiguous_format),
+                    tag="backward_autograd",
                 )
 
         self.compress_fn = CompressorAutoGradFn.apply

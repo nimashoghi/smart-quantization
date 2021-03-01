@@ -152,7 +152,11 @@ def _get_max_value(exp: int, man: int):
 
 def add_float_quantize_args(parent_parser: ArgumentParser):
     parser = ArgumentParser(parents=[parent_parser], add_help=False)
-    parser.add_argument("--float_quantize_check_inf", action="store_true")
+    parser.add_argument(
+        "--no_float_quantize_check_inf",
+        action="store_false",
+        dest="float_quantize_check_inf",
+    )
     return parser
 
 

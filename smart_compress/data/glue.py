@@ -120,7 +120,7 @@ class GLUEDataModule(LightningDataModule):
             batch_size=self.hparams.batch_size,
             pin_memory=True,
             num_workers=8,
-            shuffle=True,
+            # shuffle=True,
             collate_fn=self._collate_fn,
         )
 
