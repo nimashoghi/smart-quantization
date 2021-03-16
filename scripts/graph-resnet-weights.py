@@ -124,17 +124,22 @@ labels = ("(a)", "(b)", "(c)", "(d)")
 all_lims = (None, None, (-0.5, 0.5), None)
 all_nbins = (25, 25, None, None)
 
-plt.subplots_adjust(hspace=0.5)
+plt.subplots_adjust(hspace=0.75, wspace=0.25)
 
 for data, ax, title, lims, nbins in zip(
     datas, axs.flatten(), labels, all_lims, all_nbins
 ):
     nbins = nbins or 100
-    ax.set_title(title)
+    ax.set_title(title, y=-0.75)
     # fig = plt.gcf()
     # fig.set_size_inches(18.5, 5)
     a, b = np.histogram(data, bins=nbins, density=True)
-    ax.hist(data, bins=nbins, density=True)
+    ax.hist(
+        data,
+        bins=nbins,
+        density=True,
+        color="skyblue",
+    )
     mu, sigma = norm.fit(data)
     xmin, xmax = ax.get_xlim()
     x = np.linspace(xmin, xmax, nbins)
@@ -142,8 +147,13 @@ for data, ax, title, lims, nbins in zip(
     ax.plot(x, p, "k", linewidth=2, color="red")
     if lims is not None:
         ax.set_xlim(*lims)
-    ax.get_yaxis().set_visible(False)
+
+    ax.set_yticklabels([])
+    # ax.get_yaxis().set_visible(False)
     print(title, mu, sigma)
+    ax.set_xlabel("Tensor Value")
+    ax.set_ylabel("Frequency")
+    ax.get_lines()[0].set_color("black")
 
 # plt.xlim((-0.5, 0.5))
 plt.savefig("weights.pdf")
