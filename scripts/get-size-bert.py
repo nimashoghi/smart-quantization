@@ -6,7 +6,7 @@ import pandas as pd
 data: List[pd.DataFrame] = []
 names = []
 
-LL = "lightning_logs_bert_stsb_mar1"
+LL = "lightning_logs_bert_stsb_mar15"
 for path in glob2.glob(f"/workspaces/smart-compress/{LL}/*/version_0"):
     try:
         meta = pd.read_csv(f"{path}/meta_tags.csv")
