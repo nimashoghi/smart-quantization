@@ -1,0 +1,19 @@
+[package]
+name = "bdi-python"
+version = "0.1.0"
+authors = ["Nima Shoghi <nimashoghi@gmail.com>"]
+edition = "2018"
+
+[lib]
+name = "bdi"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+"bdi" = { path = "../" }
+"numpy" = "0.9.0"
+"ndarray" = "0.13"
+
+[dependencies.pyo3]
+version = "0.10.1"
+features = ["extension-module"]
