@@ -175,3 +175,5 @@ dmypy.json
 lightning_logs*/
 datasets/
 smart_compress/models/pytorch/state_dicts/
+
+target/
