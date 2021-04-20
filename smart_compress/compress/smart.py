@@ -1,4 +1,5 @@
 from argparse import ArgumentParser, Namespace
+from typing import Tuple, Union
 
 import torch
 import torch.nn.functional as F
@@ -54,6 +55,14 @@ class SmartFP(CompressionAlgorithmBase):
             help="max std dev for outliers (everything else is clamped to this)",
         )
         parser.add_argument("--min_size", type=int, default=8)
+        parser.add_argument(
+            "--use_range_std_dev",
+            action="store_true",
+            help="use range std dev (from range batch norm paper)",
+        )
+        parser.add_argument(
+            "--use_batch_norm", action="store_true", help="support BN acceleration"
+        )
         return parser
 
     def __init__(self, hparams: Namespace):
@@ -88,8 +97,21 @@ class SmartFP(CompressionAlgorithmBase):
 
         return floored_data + F.relu((fractions - probs) + 0.5).round()
 
+    def _get_std(self, data: torch.Tensor):
+        if self.hparams.use_range_std_dev:
+            return data.max() - data.min()
+
+        return data.std()
+
     @torch.no_grad()
-    def __call__(self, data: torch.Tensor, tag: str = None, all_positive=False, **_):
+    def __call__(
+        self,
+        data: torch.Tensor,
+        tag: str = None,
+        all_positive=False,
+        batch_norm_stats: Union[Tuple[torch.Tensor, torch.Tensor], None] = None,
+        **_
+    ):
         numel = data.numel()
         orig_size = numel * 32
         if numel < self.hparams.min_size:
@@ -98,10 +120,14 @@ class SmartFP(CompressionAlgorithmBase):
             return data
 
         mean, std_dev = (
-            (data.mean(), data.std())
+            (data.mean(), self._get_std(data))
             if not self.hparams.use_sample_stats
             else self._get_sample_mean_std(data, self.hparams)
         )
+
+        gamma, beta = batch_norm_stats or (1.0, 0.0)
+        if self.hparams.use_batch_norm:
+            data = (data - beta) / gamma
 
         if std_dev == 0:  # uniform dataset
             std_dev = torch.ones_like(std_dev, device=data.device)
@@ -125,6 +151,9 @@ class SmartFP(CompressionAlgorithmBase):
 
         data = (data / ranges) - scalars
         data = (data * std_dev) + mean
+
+        if self.hparams.use_batch_norm:
+            data = (data * gamma) + beta
 
         if all_positive:
             data = data.clamp_min(0.0)

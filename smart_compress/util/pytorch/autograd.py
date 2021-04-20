@@ -13,11 +13,11 @@ class Compressor(nn.Module):
 
         class CompressorAutoGradFn(Function):
             @staticmethod
-            def forward(ctx, x: torch.Tensor):
+            def forward(ctx, x: torch.Tensor, *args, **kwargs):
                 if not forward:
                     return x
 
-                return compress_fn(x, tag="forward_autograd")
+                return compress_fn(x, *args, **kwargs, tag="forward_autograd")
 
             @staticmethod
             def backward(ctx, grad_output):
@@ -49,7 +49,10 @@ def register_autograd_module(model: BaseModule, compress_fn, hparams: Namespace)
         module_forward = module.forward
 
         def new_forward(*args, **kwargs):
-            return compressor(module_forward(*args, **kwargs))
+            new_kwargs = dict()
+            if hparams.use_batch_norm and type(module) == nn.BatchNorm2d:
+                new_kwargs["batch_norm_stats"] = (module.weight, module.bias)
+            return compressor(module_forward(*args, **kwargs, **new_kwargs))
 
         module.forward = new_forward
 
