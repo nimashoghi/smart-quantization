@@ -88,7 +88,7 @@ class SmartFP(CompressionAlgorithmBase):
         )
         sample = data.view(-1)[sample_indices]
 
-        return sample.mean(), sample.std(unbiased=False)
+        return sample.mean(), self._get_std(sample, unbiased=False)
 
     def _round_stochastic(self, data: torch.Tensor):
         probs = torch.rand_like(data, device=data.device)
@@ -97,11 +97,13 @@ class SmartFP(CompressionAlgorithmBase):
 
         return floored_data + F.relu((fractions - probs) + 0.5).round()
 
-    def _get_std(self, data: torch.Tensor):
+    def _get_std(self, data: torch.Tensor, *args, **kwargs):
         if self.hparams.use_range_std_dev:
-            return data.max() - data.min()
+            range_ = data.max() - data.min()
+            C = 1 / torch.sqrt(2.0 * torch.log(data.numel()))
+            return range_ * C
 
-        return data.std()
+        return data.std(*args, **kwargs)
 
     @torch.no_grad()
     def __call__(
