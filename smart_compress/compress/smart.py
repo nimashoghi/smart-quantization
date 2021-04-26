@@ -128,8 +128,12 @@ class SmartFP(CompressionAlgorithmBase):
         )
 
         gamma, beta = batch_norm_stats or (1.0, 0.0)
-        if self.hparams.use_batch_norm:
-            data = (data - beta) / gamma
+        if self.hparams.use_batch_norm and batch_norm_stats is not None:
+            data = (
+                ((data.permute(0, 3, 2, 1).clone() - beta) / gamma)
+                .permute(0, 3, 2, 1)
+                .clone()
+            )
 
         if std_dev == 0:  # uniform dataset
             std_dev = torch.ones_like(std_dev, device=data.device)
@@ -154,8 +158,12 @@ class SmartFP(CompressionAlgorithmBase):
         data = (data / ranges) - scalars
         data = (data * std_dev) + mean
 
-        if self.hparams.use_batch_norm:
-            data = (data * gamma) + beta
+        if self.hparams.use_batch_norm and batch_norm_stats is not None:
+            data = (
+                ((data.permute(0, 3, 2, 1).clone() * gamma) + beta)
+                .permute(0, 3, 2, 1)
+                .clone()
+            )
 
         if all_positive:
             data = data.clamp_min(0.0)

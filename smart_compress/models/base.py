@@ -13,50 +13,22 @@ from torch.optim.lr_scheduler import MultiStepLR
 from torch.optim.optimizer import Optimizer
 
 
-def _make_adam_optimizer_base(
-    cls: Union[Type[Adam], Type[AdamW]],
-    parameters: Iterator[nn.Parameter],
+def make_optimizer_args(
     hparams: Namespace,
     **kwargs,
-):
-    optimizer_args = dict(
-        lr=hparams.learning_rate,
-        weight_decay=hparams.weight_decay,
-    )
-    optimizer_args.update(
-        dict(betas=(hparams.beta1, hparams.beta2))
-        if hparams.beta1 and hparams.beta2
-        else dict()
-    )
-    optimizer_args.update(dict(eps=hparams.epsilon) if hparams.epsilon else dict())
-    optimizer_args.update(kwargs)
-
-    return cls(parameters, **optimizer_args)
-
-
-def make_adam_optimizer(
-    parameters: Iterator[nn.Parameter], hparams: Namespace, **kwargs
-):
-    return _make_adam_optimizer_base(Adam, parameters, hparams, **kwargs)
-
-
-def make_adamw_optimizer(
-    parameters: Iterator[nn.Parameter], hparams: Namespace, **kwargs
-):
-    return _make_adam_optimizer_base(AdamW, parameters, hparams, **kwargs)
-
-
-def make_sgd_optimizer(
-    parameters: Iterator[nn.Parameter], hparams: Namespace, **kwargs
 ):
     optimizer_args = dict(
         lr=hparams.learning_rate,
         momentum=hparams.momentum,
         weight_decay=hparams.weight_decay,
     )
+    if hparams.beta1 and hparams.beta2:
+        optimizer_args.update(dict(betas=(hparams.beta1, hparams.beta2)))
+    if hparams.epsilon:
+        optimizer_args.update(dict(eps=hparams.epsilon))
     optimizer_args.update(kwargs)
 
-    return SGD(parameters, **optimizer_args)
+    return optimizer_args
 
 
 def make_multistep_scheduler(optimizer: Optimizer, hparams: Namespace):
@@ -73,15 +45,9 @@ class BaseModule(pl.LightningModule):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
         parser.add_argument(
             "--optimizer_type",
-            action=mapping_action(
-                dict(
-                    adam=make_adam_optimizer,
-                    adamw=make_adamw_optimizer,
-                    sgd=make_sgd_optimizer,
-                )
-            ),
+            action=mapping_action(dict(adam=Adam, adamw=AdamW, sgd=SGD)),
             default="sgd",
-            dest="make_optimizer_fn",
+            dest="optimizer_cls",
         )
         parser.add_argument(
             "--scheduler_type",
@@ -102,7 +68,6 @@ class BaseModule(pl.LightningModule):
         parser.add_argument("--beta2", type=float)
         parser.add_argument("--epsilon", type=float)
         parser.add_argument("--measure_average_grad_norm", action="store_true")
-        parser.add_argument("--no_weight_decay_layers", type=str, nargs="+", default=[])
         return parser
 
     def __init__(self, *args, compression=None, **kwargs):
@@ -169,8 +134,20 @@ class BaseModule(pl.LightningModule):
 
         return dict(loss=loss)
 
-    def _make_optimizer(self, parameters: Iterator[nn.Parameter], **kwargs):
-        optimizer = self.hparams.make_optimizer_fn(parameters, self.hparams, **kwargs)
+    def configure_optimizers(self):
+        base_args = make_optimizer_args(self.hparams)
+        params_bn = []
+        params_no_bn = []
+        for child in self.modules():
+            params = params_bn if type(child) == nn.BatchNorm2d else params_no_bn
+            params.extend(child.parameters(recurse=False))
+
+        optimizer = self.hparams.optimizer_cls(
+            [
+                dict(params=params_bn, no_weight_compression=True, **base_args),
+                dict(params=params_no_bn, **base_args),
+            ]
+        )
 
         if (
             self.hparams.compress_weights
@@ -184,38 +161,6 @@ class BaseModule(pl.LightningModule):
             return [optimizer], [scheduler]
 
         return [optimizer], []
-
-    def configure_optimizers(self):
-        optimizers = []
-        schedulers = []
-
-        wd_params = []
-        no_wd_params = []
-
-        for layer_name, param in self.named_parameters():
-            should_wd = not any(
-                no_decay_layer_name in layer_name
-                for no_decay_layer_name in self.hparams.no_weight_decay_layers
-            )
-            if should_wd:
-                wd_params.append(param)
-            else:
-                no_wd_params.append(param)
-
-        optimizer, scheduler = self._make_optimizer(
-            wd_params, weight_decay=self.hparams.weight_decay
-        )
-        optimizers.extend(optimizer)
-        schedulers.extend(scheduler)
-
-        if len(self.hparams.no_weight_decay_layers) == 0:
-            return optimizers, schedulers
-
-        optimizer, scheduler = self._make_optimizer(no_wd_params, weight_decay=0.0)
-        optimizers.extend(optimizer)
-        schedulers.extend(scheduler)
-
-        return optimizers, schedulers
 
     def optimizer_zero_grad(self, *args, **kwargs):
         if not self.hparams.measure_average_grad_norm:

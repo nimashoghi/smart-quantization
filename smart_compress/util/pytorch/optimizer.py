@@ -72,6 +72,9 @@ class OptimLP(Optimizer):
         # quantize gradient
         if not self.grad_quant is None:
             for group in self.param_groups:
+                if "no_grad_compression" in group and group["no_grad_compression"]:
+                    continue
+
                 for p in group["params"]:
                     if not p.requires_grad or p.grad is None:
                         continue
@@ -87,6 +90,9 @@ class OptimLP(Optimizer):
         # quantize gradient
         if not self.grad_quant is None:
             for group in self.param_groups:
+                if "no_grad_compression" in group and group["no_grad_compression"]:
+                    continue
+
                 for p in group["params"]:
                     if not p.requires_grad or p.grad is None:
                         continue
@@ -95,12 +101,21 @@ class OptimLP(Optimizer):
         # quantize weight from acc
         if not self.weight_quant is None:
             for group in self.param_groups:
+                if "no_weight_compression" in group and group["no_weight_compression"]:
+                    continue
+
                 for p in group["params"]:
                     p.data = self.weight_quant(p.data).data
 
         # quantize momentum
         if not self.momentum_quant is None:
             for group in self.param_groups:
+                if (
+                    "no_momentum_compression" in group
+                    and group["no_momentum_compression"]
+                ):
+                    continue
+
                 if isinstance(self.optim, SGD) and group["momentum"] == 0:
                     continue
                 for p in group["params"]:

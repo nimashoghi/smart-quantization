@@ -20,7 +20,7 @@ def _wrap_fn(fn, **kwargs_fn):
 
 
 def wrap_optimizer(optimizer, compress_fn, hparams: Namespace):
-    kwargs = {}
+    kwargs = dict()
     if hparams.compress_weights:
         kwargs["weight_quant"] = _wrap_fn(compress_fn, tag="optimizer_weight")
     if hparams.compress_gradients:
