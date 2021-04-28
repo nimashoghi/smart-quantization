@@ -2,7 +2,16 @@
 #include <cmath>
 #include <utility>
 
+#include <ap_int.h>
+
 constexpr auto N = 1024;
+
+struct axi_interface_type
+{
+    ap_uint<32> data;
+    ap_int<1> last;
+};
+
 using array_t = std::array<float, N>;
 using quantized_array_t = std::array<int, N>;
 
@@ -51,7 +60,7 @@ constexpr auto dequantize(const int data) {
     return float(data >> 1) * scale;
 }
 
-quantized_array_t compress(array_t array, const float scalar, const float shift)
+constexpr quantized_array_t compress(array_t array, const float shift, const float scalar)
 {
     quantized_array_t return_array = {0};
 
@@ -67,7 +76,7 @@ quantized_array_t compress(array_t array, const float scalar, const float shift)
     return return_array;
 }
 
-array_t decompress(quantized_array_t array, const float mean, const float std_dev, const float scalar, const float shift)
+constexpr array_t decompress(quantized_array_t array, const float mean, const float std_dev, const float shift, const float scalar)
 {
     array_t return_array = {0};
 
@@ -79,4 +88,28 @@ array_t decompress(quantized_array_t array, const float mean, const float std_de
     }
 
     return return_array;
+}
+
+extern "C"
+{
+    void compress_accel(const float shift, const float scalar, axi_interface_type *src, axi_interface_type *dst)
+    {
+#pragma HLS INTERFACE s_axilite port=shift
+#pragma HLS INTERFACE s_axilite port=scalar
+#pragma HLS INTERFACE axis register both port=src
+#pragma HLS INTERFACE axis register both port=dst
+#pragma HLS INTERFACE s_axilite port=return
+
+        array_t array = {0};
+
+        for (auto i = 0u; i < array.size(); ++i) {
+            array[i] = src[i].data;
+        }
+
+        const auto return_array = quantize(array, shift, scalar);
+        for (auto i = 0u; i < return_array.size(); ++i) {
+            dst[i].data = return_array[i];
+            dst[i].last = i == return_array.size();
+        }
+    }
 }
