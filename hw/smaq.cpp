@@ -96,16 +96,24 @@ extern "C"
 #pragma HLS INTERFACE axis register both port=dst
 #pragma HLS INTERFACE s_axilite port=return
 
+    	union {
+    	    int ival;
+    	    float oval;
+    	} converter;
+
         array_t array = {0};
 
-        for (auto i = 0u; i < array.size(); ++i) {
-            array[i] = src[i].data;
+        for (auto i = 0u; i < N; ++i) {
+#pragma UNROLL
+        	converter.ival = src[i].data;
+            array[i] = converter.oval;
         }
 
         const auto return_array = compress(array);
-        for (auto i = 0u; i < return_array.size(); ++i) {
+        for (auto i = 0u; i < N; ++i) {
+#pragma UNROLL
             dst[i].data = return_array[i];
-            dst[i].last = i == (return_array.size() - 1);
+            dst[i].last = i == (N - 1);
         }
     }
 
@@ -117,16 +125,24 @@ extern "C"
 #pragma HLS INTERFACE axis register both port=dst
 #pragma HLS INTERFACE s_axilite port=return
 
+    	union {
+    	    int ival;
+    	    float oval;
+    	} converter;
+
         quantized_array_t array = {0};
 
-        for (auto i = 0u; i < array.size(); ++i) {
+        for (auto i = 0u; i < N; ++i) {
+#pragma UNROLL
             array[i] = src[i].data;
         }
 
         const auto return_array = decompress(array, mean, std_dev);
-        for (auto i = 0u; i < return_array.size(); ++i) {
-            dst[i].data = return_array[i];
-            dst[i].last = i == (return_array.size() - 1);
+        for (auto i = 0u; i < N; ++i) {
+#pragma UNROLL
+        	converter.oval = return_array[i];
+            dst[i].data = converter.ival;
+            dst[i].last = i == (N - 1);
         }
     }
 }
