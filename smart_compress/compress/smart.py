@@ -63,6 +63,9 @@ class SmartFP(CompressionAlgorithmBase):
         parser.add_argument(
             "--use_batch_norm", action="store_true", help="support BN acceleration"
         )
+        parser.add_argument(
+            "--bn_scalar_params", action="store_true", help="BN params should be scalar"
+        )
         return parser
 
     def __init__(self, hparams: Namespace):
@@ -116,6 +119,8 @@ class SmartFP(CompressionAlgorithmBase):
         batch_norm_stats: Union[Tuple[torch.Tensor, torch.Tensor], None] = None,
         **_
     ):
+        use_bn = self.hparams.use_batch_norm and batch_norm_stats is not None
+
         numel = data.numel()
         orig_size = numel * 32
         if numel < self.hparams.min_size:
@@ -129,8 +134,15 @@ class SmartFP(CompressionAlgorithmBase):
             else self._get_sample_mean_std(data, self.hparams)
         )
 
-        gamma, beta = batch_norm_stats or (1.0, 0.0)
-        if self.hparams.use_batch_norm and batch_norm_stats is not None:
+        gamma, beta = batch_norm_stats or (
+            torch.tensor(1.0).type_as(std_dev),
+            torch.tensor(0.0).type_as(mean),
+        )
+        if use_bn and self.hparams.bn_scalar_params:
+            gamma = gamma.mean()
+            beta = beta.mean()
+
+        if use_bn:
             data = (
                 ((data.permute(0, 3, 2, 1).clone() - beta) / gamma)
                 .permute(0, 3, 2, 1)
@@ -160,7 +172,7 @@ class SmartFP(CompressionAlgorithmBase):
         data = (data / ranges) - scalars
         data = (data * std_dev) + mean
 
-        if self.hparams.use_batch_norm and batch_norm_stats is not None:
+        if use_bn:
             data = (
                 ((data.permute(0, 3, 2, 1).clone() * gamma) + beta)
                 .permute(0, 3, 2, 1)
