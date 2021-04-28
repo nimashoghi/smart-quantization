@@ -100,7 +100,9 @@ class SmartFP(CompressionAlgorithmBase):
     def _get_std(self, data: torch.Tensor, *args, **kwargs):
         if self.hparams.use_range_std_dev:
             range_ = data.max() - data.min()
-            C = 1 / torch.sqrt(2.0 * torch.log(data.numel()))
+            C = 1 / torch.sqrt(
+                2.0 * torch.log(torch.tensor(data.numel()).type_as(range_))
+            )
             return range_ * C
 
         return data.std(*args, **kwargs)
