@@ -105,7 +105,7 @@ extern "C"
         const auto return_array = compress(array);
         for (auto i = 0u; i < return_array.size(); ++i) {
             dst[i].data = return_array[i];
-            dst[i].last = i == return_array.size();
+            dst[i].last = i == (return_array.size() - 1);
         }
     }
 
@@ -126,7 +126,7 @@ extern "C"
         const auto return_array = decompress(array, mean, std_dev);
         for (auto i = 0u; i < return_array.size(); ++i) {
             dst[i].data = return_array[i];
-            dst[i].last = i == return_array.size();
+            dst[i].last = i == (return_array.size() - 1);
         }
     }
 }

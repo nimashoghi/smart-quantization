@@ -24,6 +24,7 @@ static inline std::pair<float, float> get_stats(const array_t &array)
     float sum_of_squares = 0.f;
 
     for (const auto value : array) {
+#pragma UNROLL
         sum += value;
         sum_of_squares += value * value;
     }
@@ -68,6 +69,7 @@ inline quantized_array_t compress(array_t array, const float shift, const float 
 
     const auto sum = 0;
     for (auto i = 0u; i < array.size(); ++i) {
+#pragma UNROLL
         const auto z_score = (array[i] - stats.first) / stats.second;
         const auto normalized = (z_score * scalar) + shift;
         return_array[i] = quantize(normalized);
@@ -82,6 +84,7 @@ inline array_t decompress(quantized_array_t array, const float mean, const float
 
     const auto sum = 0;
     for (auto i = 0u; i < array.size(); ++i) {
+#pragma UNROLL
         const auto dequantized = dequantize(array[i]);
         const auto z_score = (dequantized - shift) / scalar;
         return_array[i] = (z_score * std_dev) + mean;
@@ -103,13 +106,15 @@ extern "C"
         array_t array = {0};
 
         for (auto i = 0u; i < array.size(); ++i) {
+#pragma UNROLL
             array[i] = src[i].data;
         }
 
         const auto return_array = compress(array, shift, scalar);
         for (auto i = 0u; i < return_array.size(); ++i) {
+#pragma UNROLL
             dst[i].data = return_array[i];
-            dst[i].last = i == return_array.size();
+            dst[i].last = i == (return_array.size() - 1);
         }
     }
 
@@ -126,13 +131,15 @@ extern "C"
         quantized_array_t array = {0};
 
         for (auto i = 0u; i < array.size(); ++i) {
+#pragma UNROLL
             array[i] = src[i].data;
         }
 
         const auto return_array = decompress(array, mean, std_dev, shift, scalar);
         for (auto i = 0u; i < return_array.size(); ++i) {
+#pragma UNROLL
             dst[i].data = return_array[i];
-            dst[i].last = i == return_array.size();
+            dst[i].last = i == (return_array.size() - 1);
         }
     }
 }
