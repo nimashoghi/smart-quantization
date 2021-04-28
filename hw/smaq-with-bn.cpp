@@ -4,6 +4,7 @@
 
 #include <ap_int.h>
 #include <hls_math.h>
+#include <hls_stream.h>
 
 constexpr auto N = 1024;
 
@@ -61,22 +62,16 @@ inline float dequantize(const int data) {
     return float(data >> 1) * scale;
 }
 
-inline quantized_array_t compress(array_t array, const float shift, const float scalar)
+inline void compress(hls::stream<float> &in_stream, hls::stream<int> &out_stream, const float mean, const float std_dev, const float shift, const float scalar)
 {
-    quantized_array_t return_array = {0};
-// #pragma HLS ARRAY_PARTITION variable=return_array complete dim=1
-
-    const auto stats = get_stats(array);
-
     const auto sum = 0;
+
     for (auto i = 0u; i < N; ++i) {
 #pragma PIPELINE
-        const auto z_score = (array[i] - stats.first) / stats.second;
+        const auto z_score = (in_stream.read() - mean) / std_dev;
         const auto normalized = (z_score * scalar) + shift;
-        return_array[i] = quantize(normalized);
+        out_stream << quantize(normalized);
     }
-
-    return return_array;
 }
 
 inline array_t decompress(quantized_array_t array, const float mean, const float std_dev, const float shift, const float scalar)
@@ -102,45 +97,42 @@ inline void read_input(axi_interface_type *src, hls::stream<float> &in_stream)
         float oval;
     } converter;
 
-    for (int i = 0; i < size; i++) {
+    for (auto i = 0u; i < N; ++i) {
 #pragma HLS PIPELINE II=1
         converter.ival = src[i];
         in_stream << converter.oval;
     }
 }
 
+inline void write_result(hls::stream<int> &out_stream, axi_interface_type *dst)
+{
+    for (auto i = 0u; i < N; ++i) {
+#pragma HLS PIPELINE II=1
+        dst[i] = out_stream.read();
+    }
+}
+
 extern "C"
 {
-    void compress_accel(const float shift, const float scalar, axi_interface_type *src, axi_interface_type *dst)
+    void compress_accel(const float mean, const float std_dev, const float shift, const float scalar, float *src, float *dst)
     {
+#pragma HLS INTERFACE s_axilite port=mean
+#pragma HLS INTERFACE s_axilite port=std_dev
 #pragma HLS INTERFACE s_axilite port=shift
 #pragma HLS INTERFACE s_axilite port=scalar
 #pragma HLS INTERFACE axis register both port=src
 #pragma HLS INTERFACE axis register both port=dst
 #pragma HLS INTERFACE s_axilite port=return
 
+    hls::stream<float> in_stream{"input_stream"};
+#pragma HLS STREAM variable = in_stream depth = 32
+    hls::stream<int> out_stream{"output_stream"};
+#pragma HLS STREAM variable = out_stream depth = 32
+
 #pragma DATAFLOW
-
-    	union {
-    	    int ival;
-    	    float oval;
-    	} converter;
-
-        array_t array = {0};
-// #pragma HLS ARRAY_PARTITION variable=array complete dim=1
-
-        for (auto i = 0u; i < N; ++i) {
-#pragma PIPELINE
-        	converter.ival = src[i].data;
-            array[i] = converter.oval;
-        }
-
-        const auto return_array = compress(array, shift, scalar);
-        for (auto i = 0u; i < N; ++i) {
-#pragma PIPELINE
-            dst[i].data = return_array[i];
-            dst[i].last = i == (N - 1);
-        }
+    read_input(src, in_stream);
+    compress(in_stream, out_stream, mean, std_dev, shift, scalar);
+    write_result(out_stream, dst);
     }
 
     void decompress_accel(const float mean, const float std_dev, const float shift, const float scalar, axi_interface_type *src, axi_interface_type *dst)
