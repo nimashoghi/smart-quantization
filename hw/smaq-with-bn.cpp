@@ -8,7 +8,10 @@
 
 //#define RANGE_STD_DEV
 //#define NO_CALC_STATS
-#define SAMPLE_STATS
+//#define SAMPLE_STATS
+//#define NO_UNROLL
+//#define NO_PIPELINE
+//#define NO_DATAFLOW
 
 constexpr auto N = 2048;
 constexpr auto N_SAMPLE = 16;
@@ -46,7 +49,9 @@ static inline std::pair<float, float> get_stats(const axi_t<float> *array)
     auto sum_of_squares = 0.f;
 
     for (auto i = 0u; i < sample_size; ++i) {
+#ifndef NO_UNROLL
 #pragma HLS UNROLL factor=64 skip_exit_check
+#endif
         sum += array[i].data;
         sum_of_squares += (array[i].data * array[i].data);
     }
@@ -64,7 +69,9 @@ static inline std::pair<float, float> get_stats(const axi_t<float> *array)
     auto max = std::numeric_limits<float>::max();
 
     for (auto i = 0u; i < N; ++i) {
+#ifndef NO_UNROLL
 #pragma HLS UNROLL factor=64 skip_exit_check
+#endif
         sum += array[i].data;
         min = std::min(min, array[i].data);
         max = std::max(max, array[i].data);
@@ -105,7 +112,9 @@ inline float dequantize(const int data) {
 inline void compress(hls::stream<float> &in_stream, hls::stream<int> &out_stream, const float mean, const float recpr_std_dev, const float shift, const float scalar)
 {
     for (auto i = 0u; i < N; ++i) {
+#ifndef NO_PIPELINE
 #pragma HLS PIPELINE II=1
+#endif
         const auto z_score = (in_stream.read() - mean) * recpr_std_dev;
         const auto normalized = (z_score * scalar) + shift;
         out_stream << quantize(normalized);
@@ -115,7 +124,9 @@ inline void compress(hls::stream<float> &in_stream, hls::stream<int> &out_stream
 inline void decompress(hls::stream<int> &in_stream, hls::stream<float> &out_stream, const float mean, const float std_dev, const float shift, const float scalar)
 {
     for (auto i = 0u; i < N; ++i) {
+#ifndef NO_PIPELINE
 #pragma HLS PIPELINE II=1
+#endif
         const auto dequantized = dequantize(in_stream.read());
         const auto z_score = (dequantized - shift) / scalar;
         out_stream << (z_score * std_dev) + mean;
@@ -126,7 +137,9 @@ template<typename T>
 inline void read_input(axi_t<T> *src, hls::stream<T> &in_stream)
 {
     for (auto i = 0u; i < N; ++i) {
+#ifndef NO_PIPELINE
 #pragma HLS PIPELINE II=1
+#endif
         in_stream << src[i].data;
     }
 }
@@ -135,7 +148,9 @@ template<typename T>
 inline void write_result(hls::stream<T> &out_stream, axi_t<T> *dst)
 {
     for (auto i = 0u; i < N; ++i) {
+#ifndef NO_PIPELINE
 #pragma HLS PIPELINE II=1
+#endif
         dst[i].data = out_stream.read();
         dst[i].last = i == N - 1;
     }
@@ -148,7 +163,9 @@ inline void compress_inner(const float mean, const float recpr_std_dev, const fl
 	hls::stream<int> out_stream{"output_stream"};
 #pragma HLS STREAM variable=out_stream depth=64
 
+#ifndef NO_DATAFLOW
 #pragma HLS DATAFLOW
+#endif
 	read_input(src, in_stream);
 	compress(in_stream, out_stream, mean, recpr_std_dev, shift, scalar);
 	write_result(out_stream, dst);
