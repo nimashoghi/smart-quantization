@@ -6,12 +6,23 @@
 #include <hls_math.h>
 #include <hls_stream.h>
 
-// #define RANGE_STD_DEV
-// #define NO_CALC_STATS
+//#define RANGE_STD_DEV
+//#define NO_CALC_STATS
+#define SAMPLE_STATS
 
 constexpr auto N = 2048;
+constexpr auto N_SAMPLE = 16;
 // formula = 1 / sqrt(2 * log(N))
 constexpr auto C_N = 0.3467341730212743f;
+
+constexpr int get_sample_size()
+{
+#ifdef SAMPLE_STATS
+	return N_SAMPLE;
+#else
+	return N;
+#endif
+}
 
 template<typename T>
 struct axi_t
@@ -29,17 +40,19 @@ using quantized_array_t = std::array<int, N>;
 #ifndef RANGE_STD_DEV
 static inline std::pair<float, float> get_stats(const axi_t<float> *array)
 {
+	constexpr auto sample_size = get_sample_size();
+
     auto sum = 0.f;
     auto sum_of_squares = 0.f;
 
-    for (auto i = 0u; i < N; ++i) {
+    for (auto i = 0u; i < sample_size; ++i) {
 #pragma HLS UNROLL factor=64 skip_exit_check
         sum += array[i].data;
         sum_of_squares += (array[i].data * array[i].data);
     }
 
-    const auto mean = sum / N;
-    const auto square_mean = sum_of_squares / N;
+    const auto mean = sum / sample_size;
+    const auto square_mean = sum_of_squares / sample_size;
 
    return std::make_pair(mean, hls::rsqrt(square_mean - (mean * mean)));
 }
