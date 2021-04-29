@@ -83,13 +83,9 @@ class SmartFP(CompressionAlgorithmBase):
         )
 
     def _get_sample_mean_std(self, data: torch.Tensor):
-        numel = torch.tensor(data.numel(), dtype=torch.long, device=data.device)
-        sample_indices = (
-            torch.rand(torch.min(numel, self.hparams.num_samples), device=data.device)
-            .mul(numel)
-            .long()
-        )
-        sample = data.view(-1)[sample_indices]
+        numel = data.numel()
+        k = min(numel, self.hparams.num_samples)
+        sample = data.view(-1)[torch.randperm(numel, device=data.device)[:k]]
 
         return sample.mean(), self._get_std(sample, unbiased=False)
 
@@ -131,7 +127,7 @@ class SmartFP(CompressionAlgorithmBase):
         mean, std_dev = (
             (data.mean(), self._get_std(data))
             if not self.hparams.use_sample_stats
-            else self._get_sample_mean_std(data, self.hparams)
+            else self._get_sample_mean_std(data)
         )
 
         gamma, beta = batch_norm_stats or (
