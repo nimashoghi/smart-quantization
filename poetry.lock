@@ -333,6 +333,23 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
+name = "kaggle"
+version = "1.5.12"
+description = "Kaggle API"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+certifi = "*"
+python-dateutil = "*"
+python-slugify = "*"
+requests = "*"
+six = ">=1.10"
+tqdm = "*"
+urllib3 = "*"
+
+[[package]]
 name = "keyring"
 version = "21.5.0"
 description = "Store and access your passwords safely."
@@ -356,6 +373,26 @@ description = "A fast implementation of the Cassowary constraint solver"
 category = "dev"
 optional = false
 python-versions = ">=3.6"
+
+[[package]]
+name = "lightning-bolts"
+version = "0.3.3"
+description = "PyTorch Lightning Bolts is a community contribution for ML researchers."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+pytorch-lightning = ">=1.1.1"
+torch = ">=1.6"
+torchmetrics = ">=0.2.0"
+
+[package.extras]
+dev = ["torchvision (>=0.7)", "scikit-learn (>=0.23)", "pillow", "opencv-python-headless", "gym (>=0.17.2)", "matplotlib", "wandb", "scipy", "codecov (>=2.1)", "pytest (>=6.0)", "pytest-cov (>2.10)", "flake8", "check-manifest", "twine (>=3.2)", "isort (>=5.6.4)", "pre-commit (>=1.0)", "mypy (>=0.790)", "yapf (>=0.29.0)", "atari-py (==0.2.6)"]
+extra = ["torchvision (>=0.7)", "scikit-learn (>=0.23)", "pillow", "opencv-python-headless", "gym (>=0.17.2)", "matplotlib", "wandb", "scipy"]
+loggers = ["matplotlib", "wandb", "scipy"]
+models = ["torchvision (>=0.7)", "scikit-learn (>=0.23)", "pillow", "opencv-python-headless", "gym (>=0.17.2)"]
+test = ["codecov (>=2.1)", "pytest (>=6.0)", "pytest-cov (>2.10)", "flake8", "check-manifest", "twine (>=3.2)", "isort (>=5.6.4)", "pre-commit (>=1.0)", "mypy (>=0.790)", "yapf (>=0.29.0)", "atari-py (==0.2.6)", "scikit-learn (>=0.23)"]
 
 [[package]]
 name = "markdown"
@@ -553,6 +590,20 @@ python-versions = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
 
 [package.dependencies]
 six = ">=1.5"
+
+[[package]]
+name = "python-slugify"
+version = "5.0.2"
+description = "A Python Slugify application that handles Unicode"
+category = "dev"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+text-unidecode = ">=1.3"
+
+[package.extras]
+unidecode = ["Unidecode (>=1.1.1)"]
 
 [[package]]
 name = "pytorch-lightning"
@@ -849,6 +900,14 @@ tensorboard = ">=1.15.0"
 torch = ">=1.1.0"
 
 [[package]]
+name = "text-unidecode"
+version = "1.3"
+description = "The most basic Text::Unidecode port"
+category = "dev"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "threadpoolctl"
 version = "2.1.0"
 description = "threadpoolctl"
@@ -888,6 +947,18 @@ dataclasses = "*"
 future = "*"
 numpy = "*"
 typing-extensions = "*"
+
+[[package]]
+name = "torchmetrics"
+version = "0.3.2"
+description = "PyTorch native Metrics"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+packaging = "*"
+torch = ">=1.3.1"
 
 [[package]]
 name = "tqdm"
@@ -1015,7 +1086,7 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "78eb7b528b4e9382ce10e15a7abb8ae41a0962890bf441ced1769f9c008540b0"
+content-hash = "1b38a7728a72907e1e4f14d2888cd7985e953dda13ab9425beaab88c8f9c3222"
 
 [metadata.files]
 absl-py = [
@@ -1079,7 +1150,6 @@ cffi = [
     {file = "cffi-1.14.4-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:840793c68105fe031f34d6a086eaea153a0cd5c491cde82a74b420edd0a2b909"},
     {file = "cffi-1.14.4-cp39-cp39-manylinux1_i686.whl", hash = "sha256:b18e0a9ef57d2b41f5c68beefa32317d286c3d6ac0484efd10d6e07491bb95dd"},
     {file = "cffi-1.14.4-cp39-cp39-manylinux1_x86_64.whl", hash = "sha256:045d792900a75e8b1e1b0ab6787dd733a8190ffcf80e8c8ceb2fb10a29ff238a"},
-    {file = "cffi-1.14.4-cp39-cp39-manylinux2014_aarch64.whl", hash = "sha256:7ef7d4ced6b325e92eb4d3502946c78c5367bc416398d387b39591532536734e"},
     {file = "cffi-1.14.4-cp39-cp39-win32.whl", hash = "sha256:ba4e9e0ae13fc41c6b23299545e5ef73055213e466bd107953e4a013a5ddd7e3"},
     {file = "cffi-1.14.4-cp39-cp39-win_amd64.whl", hash = "sha256:f032b34669220030f905152045dfa27741ce1a6db3324a5bc0b96b6c7420c87b"},
     {file = "cffi-1.14.4.tar.gz", hash = "sha256:1a465cbe98a7fd391d47dce4b8f7e5b921e6cd805ef421d04f5f66ba8f06086c"},
@@ -1215,6 +1285,9 @@ joblib = [
     {file = "joblib-1.0.0-py3-none-any.whl", hash = "sha256:75ead23f13484a2a414874779d69ade40d4fa1abe62b222a23cd50d4bc822f6f"},
     {file = "joblib-1.0.0.tar.gz", hash = "sha256:7ad866067ac1fdec27d51c8678ea760601b70e32ff1881d4dc8e1171f2b64b24"},
 ]
+kaggle = [
+    {file = "kaggle-1.5.12.tar.gz", hash = "sha256:b4d87d107bff743aaa805c2b382c3661c4c175cdb159656d4972be2a9cef42cb"},
+]
 keyring = [
     {file = "keyring-21.5.0-py3-none-any.whl", hash = "sha256:12de23258a95f3b13e5b167f7a641a878e91eab8ef16fafc077720a95e6115bb"},
     {file = "keyring-21.5.0.tar.gz", hash = "sha256:207bd66f2a9881c835dad653da04e196c678bf104f8252141d2d3c4f31051579"},
@@ -1252,6 +1325,10 @@ kiwisolver = [
     {file = "kiwisolver-1.3.1-pp36-pypy36_pp73-manylinux2010_x86_64.whl", hash = "sha256:33449715e0101e4d34f64990352bce4095c8bf13bed1b390773fc0a7295967b3"},
     {file = "kiwisolver-1.3.1-pp36-pypy36_pp73-win32.whl", hash = "sha256:401a2e9afa8588589775fe34fc22d918ae839aaaf0c0e96441c0fdbce6d8ebe6"},
     {file = "kiwisolver-1.3.1.tar.gz", hash = "sha256:950a199911a8d94683a6b10321f9345d5a3a8433ec58b217ace979e18f16e248"},
+]
+lightning-bolts = [
+    {file = "lightning-bolts-0.3.3.tar.gz", hash = "sha256:bb69b3920a7b485d15eddd3847602ea468cfe43f962e33b0e5e82624de354688"},
+    {file = "lightning_bolts-0.3.3-py3-none-any.whl", hash = "sha256:7754793aabe149dfff75f5cc34eda69f69dd82be992ee2d4fa36a437f762d21c"},
 ]
 markdown = [
     {file = "Markdown-3.3.3-py3-none-any.whl", hash = "sha256:c109c15b7dc20a9ac454c9e6025927d44460b85bd039da028d85e2b6d0bcc328"},
@@ -1506,6 +1583,10 @@ python-dateutil = [
     {file = "python-dateutil-2.8.1.tar.gz", hash = "sha256:73ebfe9dbf22e832286dafa60473e4cd239f8592f699aa5adaf10050e6e1823c"},
     {file = "python_dateutil-2.8.1-py2.py3-none-any.whl", hash = "sha256:75bb3f31ea686f1197762692a9ee6a7550b59fc6ca3a1f4b5d7e32fb98e2da2a"},
 ]
+python-slugify = [
+    {file = "python-slugify-5.0.2.tar.gz", hash = "sha256:f13383a0b9fcbe649a1892b9c8eb4f8eab1d6d84b84bb7a624317afa98159cab"},
+    {file = "python_slugify-5.0.2-py2.py3-none-any.whl", hash = "sha256:6d8c5df75cd4a7c3a2d21e257633de53f52ab0265cd2d1dc62a730e8194a7380"},
+]
 pytorch-lightning = [
     {file = "pytorch-lightning-1.1.1.tar.gz", hash = "sha256:9f7c03812d82fd0f7ae2998692fa2f1846a2d8eb593085c6a8320b1168cef4c4"},
     {file = "pytorch_lightning-1.1.1-py3-none-any.whl", hash = "sha256:d894078f513007fe805f7fec03331b6ed69da094ccee804fa5ec2d858fb22760"},
@@ -1682,6 +1763,10 @@ tensorboard-plugin-wit = [
 test-tube = [
     {file = "test_tube-0.7.5.tar.gz", hash = "sha256:1379c33eb8cde3e9b36610f87da0f16c2e06496b1cfebac473df4e7be2faa124"},
 ]
+text-unidecode = [
+    {file = "text-unidecode-1.3.tar.gz", hash = "sha256:bad6603bb14d279193107714b288be206cac565dfa49aa5b105294dd5c4aab93"},
+    {file = "text_unidecode-1.3-py2.py3-none-any.whl", hash = "sha256:1311f10e8b895935241623731c2ba64f4c455287888b18189350b67134a822e8"},
+]
 threadpoolctl = [
     {file = "threadpoolctl-2.1.0-py3-none-any.whl", hash = "sha256:38b74ca20ff3bb42caca8b00055111d74159ee95c4370882bbff2b93d24da725"},
     {file = "threadpoolctl-2.1.0.tar.gz", hash = "sha256:ddc57c96a38beb63db45d6c159b5ab07b6bced12c45a1f07b2b92f272aebfa6b"},
@@ -1743,6 +1828,10 @@ torch = [
     {file = "torch-1.7.0-cp38-cp38-manylinux1_x86_64.whl", hash = "sha256:11054f26eee5c3114d217201dba5b3a35f1745d11133c123c077c5981bc95997"},
     {file = "torch-1.7.0-cp38-cp38m-win_amd64.whl", hash = "sha256:83538fd7920bd02c8b6403ebe4ecee3e0641fe7bb6a18efc4585d2e1375ad1de"},
     {file = "torch-1.7.0-cp38-none-macosx_10_9_x86_64.whl", hash = "sha256:b8000e39600e101b2f19dbbab75de663a3b78e3979c3e1720b7136aae1c35ce2"},
+]
+torchmetrics = [
+    {file = "torchmetrics-0.3.2-py3-none-any.whl", hash = "sha256:04bfbfdf4fb12f7191fa86b4e42efb7205d4cb95e833b6add60f55fdba9ae5fb"},
+    {file = "torchmetrics-0.3.2.tar.gz", hash = "sha256:351391e79f20458fa3a2876b2e559ebb69536d8c38b47b085b66ac5acfb7269d"},
 ]
 tqdm = [
     {file = "tqdm-4.49.0-py2.py3-none-any.whl", hash = "sha256:8f3c5815e3b5e20bc40463fa6b42a352178859692a68ffaa469706e6d38342a5"},

@@ -16,11 +16,13 @@ argparse-utils = "^1.3.0"
 scipy = "^1.5.4"
 sklearn = "^0.0"
 test-tube = "^0.7.5"
+lightning-bolts = "^0.3.3"
 
 [tool.poetry.dev-dependencies]
 seaborn = "^0.11.1"
 tensorboard = "^2.5.0"
 black = {version = "^20.8b1", allow-prereleases = true}
+kaggle = "^1.5.12"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -61,7 +61,11 @@ def register_autograd_module(model: BaseModule, compress_fn, hparams: Namespace)
         module_forward = module.forward
 
         def new_forward(*args, **kwargs):
-            if hparams.use_batch_norm and type(module) == nn.BatchNorm2d:
+            if (
+                hasattr(hparams, "use_batch_norm")
+                and hparams.use_batch_norm
+                and type(module) == nn.BatchNorm2d
+            ):
                 new_kwargs = dict(
                     batch_norm_stats=(module.weight.detach(), module.bias.detach())
                 )

@@ -81,6 +81,7 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
     from smart_compress.data.cifar100 import CIFAR100DataModule
     from smart_compress.data.glue import GLUEDataModule
     from smart_compress.data.imdb import IMDBDataModule
+    from smart_compress.data.tiny_imagenet import TinyImageNetDataModule
     from smart_compress.models.base import BaseModule
     from smart_compress.models.bert import BertModule
     from smart_compress.models.inception import InceptionModule
@@ -107,6 +108,7 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
                 cifar100=CIFAR100DataModule,
                 glue=GLUEDataModule,
                 imdb=IMDBDataModule,
+                tiny_imagenet=TinyImageNetDataModule,
             )
         ),
         default="cifar10",

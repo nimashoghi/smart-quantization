@@ -177,3 +177,4 @@ datasets/
 smart_compress/models/pytorch/state_dicts/
 
 target/
+imagenet/
