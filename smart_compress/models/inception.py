@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 
-import pytorch_lightning.metrics.functional.classification as FMC
+import torchmetrics.functional as FM
 from smart_compress.models.base import BaseModule
 from smart_compress.models.pytorch.inception import inception_v3
 
@@ -26,7 +26,9 @@ class InceptionModule(BaseModule):
 
     def accuracy_function(self, outputs, ground_truth):
         return dict(
-            accuracy=FMC.accuracy(
-                outputs, ground_truth, num_classes=self.hparams.num_classes
+            accuracy=FM.accuracy(
+                outputs.argmax(dim=1),
+                ground_truth,
+                num_classes=self.hparams.num_classes,
             )
         )

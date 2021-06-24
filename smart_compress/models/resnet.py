@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 
-import pytorch_lightning.metrics.functional.classification as FMC
+from torch.utils.checkpoint import checkpoint
+import torchmetrics.functional as FM
 from argparse_utils.mapping import mapping_action
 from smart_compress.models.base import BaseModule
 from smart_compress.models.pytorch.resnet import resnet18, resnet34, resnet50
@@ -35,7 +36,9 @@ class ResNetModule(BaseModule):
 
     def accuracy_function(self, outputs, ground_truth):
         return dict(
-            accuracy=FMC.accuracy(
-                outputs, ground_truth, num_classes=self.hparams.num_classes
+            accuracy=FM.accuracy(
+                outputs.argmax(dim=1),
+                ground_truth,
+                num_classes=self.hparams.num_classes,
             )
         )
