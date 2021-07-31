@@ -18,9 +18,10 @@
     ],
     "shutdownAction": "none",
     "extensions": [
-        "ms-python.python",
-        "ms-python.vscode-pylance",
-        "ms-python.gather",
-        "visualstudioexptteam.vscodeintellicode"
-    ]
+		"ms-python.python",
+		"ms-python.vscode-pylance",
+		"ms-python.gather",
+		"visualstudioexptteam.vscodeintellicode",
+		"ninoseki.vscode-pylens"
+	]
 }
