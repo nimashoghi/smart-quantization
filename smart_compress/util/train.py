@@ -6,6 +6,8 @@ from typing import Dict, List, Union
 from argparse_utils import mapping_action
 from pytorch_lightning import Trainer
 from pytorch_lightning.loggers.test_tube import TestTubeLogger
+from pytorch_lightning.plugins.training_type import DDPPlugin
+from smart_compress.util.globals import Globals
 from smart_compress.util.pytorch.autograd import register_autograd_module
 from smart_compress.util.pytorch.hooks import register_global_hooks
 
@@ -191,6 +193,7 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
     trainer = Trainer.from_argparse_args(
         args,
         logger=TestTubeLogger(args.logdir, name=args.name, create_git_tag=args.git),
+        # plugins=[DDPPlugin(find_unused_parameters=False)],
     )
 
     compression: CompressionAlgorithmBase = (
@@ -210,5 +213,8 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
 
     if model.hparams.compress:
         model = model.hparams.compression_hook_fn(model, compression, model.hparams)
+
+    # set up globals
+    Globals.compression = compression
 
     return model, trainer, data
