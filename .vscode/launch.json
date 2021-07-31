@@ -34,7 +34,6 @@
                 "6",
                 "--num_bits_outlier",
                 "8",
-                "--use_batch_norm",
                 "--tags",
                 "6,8",
                 "--measure_compression_ratio"

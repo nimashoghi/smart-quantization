@@ -1,4 +1,4 @@
-python ./train.py --git --accelerator ddp --gpus -1 --model resnet --dataset cifar10 --batch_size 128 --val_batch_size 64 --max_epochs 250 --compress smart --num_bits_main 6 --num_bits_outlier 8 --tags "6,8" --measure_compression_ratio @args
+python ./train.py --git --accelerator ddp --gpus -1 --model resnet --dataset cifar10 --batch_size 128 --val_batch_size 64 --max_epochs 1 --compress smart --num_bits_main 6 --num_bits_outlier 8 --tags "6,8" --profiler advanced --max_time 00:00:00:10 @args
 # python ./train.py --git --accelerator ddp --gpus -1 --model resnet --dataset cifar10 --batch_size 128 --val_batch_size 64 --max_epochs 250 --compress fp8 @args
 # python ./train.py --git --accelerator ddp --gpus -1 --model resnet --dataset cifar10 --batch_size 128 --val_batch_size 64 --max_epochs 250 --compress s2fp8 --measure_compression_ratio @args
 # python ./train.py --git --accelerator ddp --gpus -1 --model resnet --dataset cifar10 --batch_size 128 --val_batch_size 64 --max_epochs 250 --compress fp16 @args

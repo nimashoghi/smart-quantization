@@ -32,7 +32,7 @@ class CIFARBaseDataModule(LightningDataModule):
     def __init__(self, hparams):
         super().__init__()
 
-        self.hparams = hparams
+        self.hparams.update(hparams)
         if self.hparams.val_batch_size is None:
             self.hparams.val_batch_size = max(self.hparams.batch_size // 4, 1)
 

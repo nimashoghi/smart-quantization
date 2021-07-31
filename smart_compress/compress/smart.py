@@ -1,4 +1,5 @@
 from argparse import ArgumentParser, Namespace
+from smart_compress.util.globals import Globals
 from typing import Tuple, Union
 
 import torch
@@ -115,73 +116,75 @@ class SmartFP(CompressionAlgorithmBase):
         batch_norm_stats: Union[Tuple[torch.Tensor, torch.Tensor], None] = None,
         **_
     ):
-        use_bn = self.hparams.use_batch_norm and batch_norm_stats is not None
+        with Globals.profiler.profile("smaq"):
 
-        numel = data.numel()
-        orig_size = numel * 32
-        if numel < self.hparams.min_size:
-            self.log_ratio(tag, orig_size, 32, 32)
+            use_bn = self.hparams.use_batch_norm and batch_norm_stats is not None
+
+            numel = data.numel()
+            orig_size = numel * 32
+            if numel < self.hparams.min_size:
+                self.log_ratio(tag, orig_size, 32, 32)
+
+                return data
+
+            mean, std_dev = (
+                (data.mean(), self._get_std(data))
+                if not self.hparams.use_sample_stats
+                else self._get_sample_mean_std(data)
+            )
+
+            gamma, beta = batch_norm_stats or (
+                torch.tensor(1.0).type_as(std_dev),
+                torch.tensor(0.0).type_as(mean),
+            )
+            if use_bn and self.hparams.bn_scalar_params:
+                gamma = gamma.mean()
+                beta = beta.mean()
+
+            if use_bn:
+                data = (
+                    ((data.permute(0, 3, 2, 1).clone() - beta) / gamma)
+                    .permute(0, 3, 2, 1)
+                    .clone()
+                )
+
+            if std_dev == 0:  # uniform dataset
+                std_dev = torch.ones_like(std_dev, device=data.device)
+
+            data = (data - mean) / std_dev.clamp(*self.clamped_range)
+            is_outlier_higher = data > self.hparams.main_std_dev_threshold
+            is_outlier_lower = data < -self.hparams.main_std_dev_threshold
+            is_outlier = is_outlier_higher | is_outlier_lower
+
+            scalars = (is_outlier_higher * -self.hparams.main_std_dev_threshold) + (
+                is_outlier_lower * self.hparams.main_std_dev_threshold
+            )
+            ranges = torch.where(is_outlier, self.range_outlier, self.range_normal)
+
+            data = (data + scalars) * ranges
+
+            if self.hparams.stochastic_rounding:
+                data = self._round_stochastic(data)
+            else:
+                data = data.trunc()
+
+            data = (data / ranges) - scalars
+            data = (data * std_dev) + mean
+
+            if use_bn:
+                data = (
+                    ((data.permute(0, 3, 2, 1).clone() * gamma) + beta)
+                    .permute(0, 3, 2, 1)
+                    .clone()
+                )
+
+            if all_positive:
+                data = data.clamp_min(0.0)
+
+            new_size = lambda: (
+                torch.sum(is_outlier) * self.hparams.num_bits_outlier
+                + torch.sum(~is_outlier) * self.hparams.num_bits_main
+            )
+            self.log_size(tag, orig_size, new_size)
 
             return data
-
-        mean, std_dev = (
-            (data.mean(), self._get_std(data))
-            if not self.hparams.use_sample_stats
-            else self._get_sample_mean_std(data)
-        )
-
-        gamma, beta = batch_norm_stats or (
-            torch.tensor(1.0).type_as(std_dev),
-            torch.tensor(0.0).type_as(mean),
-        )
-        if use_bn and self.hparams.bn_scalar_params:
-            gamma = gamma.mean()
-            beta = beta.mean()
-
-        if use_bn:
-            data = (
-                ((data.permute(0, 3, 2, 1).clone() - beta) / gamma)
-                .permute(0, 3, 2, 1)
-                .clone()
-            )
-
-        if std_dev == 0:  # uniform dataset
-            std_dev = torch.ones_like(std_dev, device=data.device)
-
-        data = (data - mean) / std_dev.clamp(*self.clamped_range)
-        is_outlier_higher = data > self.hparams.main_std_dev_threshold
-        is_outlier_lower = data < -self.hparams.main_std_dev_threshold
-        is_outlier = is_outlier_higher | is_outlier_lower
-
-        scalars = (is_outlier_higher * -self.hparams.main_std_dev_threshold) + (
-            is_outlier_lower * self.hparams.main_std_dev_threshold
-        )
-        ranges = torch.where(is_outlier, self.range_outlier, self.range_normal)
-
-        data = (data + scalars) * ranges
-
-        if self.hparams.stochastic_rounding:
-            data = self._round_stochastic(data)
-        else:
-            data = data.trunc()
-
-        data = (data / ranges) - scalars
-        data = (data * std_dev) + mean
-
-        if use_bn:
-            data = (
-                ((data.permute(0, 3, 2, 1).clone() * gamma) + beta)
-                .permute(0, 3, 2, 1)
-                .clone()
-            )
-
-        if all_positive:
-            data = data.clamp_min(0.0)
-
-        new_size = lambda: (
-            torch.sum(is_outlier) * self.hparams.num_bits_outlier
-            + torch.sum(~is_outlier) * self.hparams.num_bits_main
-        )
-        self.log_size(tag, orig_size, new_size)
-
-        return data

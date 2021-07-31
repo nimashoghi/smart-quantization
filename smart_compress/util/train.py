@@ -214,5 +214,6 @@ def init_model_from_args(argv: Union[None, str, List[str]] = None):
 
     # set up globals
     Globals.compression = compression
+    Globals.profiler = trainer.profiler
 
     return model, trainer, data
