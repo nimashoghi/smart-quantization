@@ -15,7 +15,7 @@ class InceptionModule(BaseModule):
         return parser
 
     def __init__(self, *args, **kwargs):
-        super(InceptionModule, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.save_hyperparameters()
 

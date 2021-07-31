@@ -37,7 +37,7 @@ class CompressionAlgorithmBase:
         return parser
 
     def __init__(self, hparams: Namespace):
-        super(CompressionAlgorithmBase, self).__init__()
+        super().__init__()
 
         self.hparams = hparams
 

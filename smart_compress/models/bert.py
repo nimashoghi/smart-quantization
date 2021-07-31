@@ -24,7 +24,7 @@ class BertModule(BaseModule):
         return parser
 
     def __init__(self, *args, **kwargs):
-        super(BertModule, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.save_hyperparameters()
 

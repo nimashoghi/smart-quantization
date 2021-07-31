@@ -71,7 +71,7 @@ class BaseModule(pl.LightningModule):
         return parser
 
     def __init__(self, *args, compression=None, **kwargs):
-        super(BaseModule, self).__init__()
+        super().__init__()
 
         self.compression = compression
         if self.compression is None:
@@ -86,14 +86,14 @@ class BaseModule(pl.LightningModule):
 
     def training_epoch_end(self, *args, **kwargs):
         if not self.hparams.measure_average_grad_norm:
-            return super(BaseModule, self).training_epoch_end(*args, **kwargs)
+            return super().training_epoch_end(*args, **kwargs)
 
         try:
             avg = torch.mean(torch.tensor(self._grads))
             print(f"AVERAGE: {avg}")
         except:
             pass
-        return super(BaseModule, self).training_epoch_end(*args, **kwargs)
+        return super().training_epoch_end(*args, **kwargs)
 
     def loss_function(self, outputs, ground_truth):
         return F.cross_entropy(outputs, ground_truth)
@@ -164,7 +164,7 @@ class BaseModule(pl.LightningModule):
 
     def optimizer_zero_grad(self, *args, **kwargs):
         if not self.hparams.measure_average_grad_norm:
-            return super(BaseModule, self).optimizer_zero_grad(*args, **kwargs)
+            return super().optimizer_zero_grad(*args, **kwargs)
 
         norms = torch.tensor(
             [
@@ -177,4 +177,4 @@ class BaseModule(pl.LightningModule):
         if len(norms):
             self._grads.append(torch.mean(norms))
 
-        return super(BaseModule, self).optimizer_zero_grad(*args, **kwargs)
+        return super().optimizer_zero_grad(*args, **kwargs)

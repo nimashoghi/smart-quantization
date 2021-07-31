@@ -29,7 +29,7 @@ class IMDBDataModule(LightningDataModule):
         return parser
 
     def __init__(self, hparams):
-        super(IMDBDataModule, self).__init__()
+        super().__init__()
 
         self.hparams = hparams
         if self.hparams.val_batch_size is None:

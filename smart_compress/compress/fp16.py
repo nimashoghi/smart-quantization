@@ -22,7 +22,7 @@ class FP16(CompressionAlgorithmBase):
         return parser
 
     def __init__(self, hparams: Namespace):
-        super(FP16, self).__init__(hparams)
+        super().__init__(hparams)
 
     @torch.no_grad()
     def __call__(self, tensor: torch.Tensor, tag: str = None, **_):

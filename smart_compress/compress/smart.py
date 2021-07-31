@@ -69,7 +69,7 @@ class SmartFP(CompressionAlgorithmBase):
         return parser
 
     def __init__(self, hparams: Namespace):
-        super(SmartFP, self).__init__(hparams)
+        super().__init__(hparams)
 
         self.range_outlier = ((2 ** (self.hparams.num_bits_outlier - 2)) - 1) / (
             self.hparams.outlier_std_dev_threshold - self.hparams.main_std_dev_threshold

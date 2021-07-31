@@ -20,7 +20,7 @@ class CIFAR10DataModule(CIFARBaseDataModule):
         return parser
 
     def __init__(self, *args, **kwargs):
-        super(CIFAR10DataModule, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def make_dataset(self, name, *args, **kwargs):
         return CIFAR10(f"./datasets/cifar10/cifar10-{name}", *args, **kwargs)

@@ -17,7 +17,7 @@ def process_input(args: List[AnyType]):
 
 class Compressor(nn.Module):
     def __init__(self, compress_fn, forward=True, backward=True):
-        super(Compressor, self).__init__()
+        super().__init__()
 
         class CompressorAutoGradFn(Function):
             @staticmethod

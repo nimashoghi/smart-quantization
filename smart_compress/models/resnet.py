@@ -25,7 +25,7 @@ class ResNetModule(BaseModule):
         return parser
 
     def __init__(self, *args, **kwargs):
-        super(ResNetModule, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.save_hyperparameters()
 

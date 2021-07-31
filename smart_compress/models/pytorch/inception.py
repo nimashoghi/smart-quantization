@@ -40,7 +40,7 @@ def inception_v3(pretrained=False, progress=True, device="cpu", **kwargs):
 class Inception3(nn.Module):
     # CIFAR10: aux_logits True->False
     def __init__(self, num_classes=10, aux_logits=False, transform_input=False):
-        super(Inception3, self).__init__()
+        super().__init__()
         self.aux_logits = aux_logits
         self.transform_input = transform_input
 
@@ -142,7 +142,7 @@ class Inception3(nn.Module):
 
 class InceptionA(nn.Module):
     def __init__(self, in_channels, pool_features):
-        super(InceptionA, self).__init__()
+        super().__init__()
         self.branch1x1 = BasicConv2d(in_channels, 64, kernel_size=1)
 
         self.branch5x5_1 = BasicConv2d(in_channels, 48, kernel_size=1)
@@ -173,7 +173,7 @@ class InceptionA(nn.Module):
 
 class InceptionB(nn.Module):
     def __init__(self, in_channels):
-        super(InceptionB, self).__init__()
+        super().__init__()
         self.branch3x3 = BasicConv2d(in_channels, 384, kernel_size=3, stride=2)
 
         self.branch3x3dbl_1 = BasicConv2d(in_channels, 64, kernel_size=1)
@@ -195,7 +195,7 @@ class InceptionB(nn.Module):
 
 class InceptionC(nn.Module):
     def __init__(self, in_channels, channels_7x7):
-        super(InceptionC, self).__init__()
+        super().__init__()
         self.branch1x1 = BasicConv2d(in_channels, 192, kernel_size=1)
 
         c7 = channels_7x7
@@ -233,7 +233,7 @@ class InceptionC(nn.Module):
 
 class InceptionD(nn.Module):
     def __init__(self, in_channels):
-        super(InceptionD, self).__init__()
+        super().__init__()
         self.branch3x3_1 = BasicConv2d(in_channels, 192, kernel_size=1)
         self.branch3x3_2 = BasicConv2d(192, 320, kernel_size=3, stride=2)
 
@@ -258,7 +258,7 @@ class InceptionD(nn.Module):
 
 class InceptionE(nn.Module):
     def __init__(self, in_channels):
-        super(InceptionE, self).__init__()
+        super().__init__()
         self.branch1x1 = BasicConv2d(in_channels, 320, kernel_size=1)
 
         self.branch3x3_1 = BasicConv2d(in_channels, 384, kernel_size=1)
@@ -299,7 +299,7 @@ class InceptionE(nn.Module):
 
 class InceptionAux(nn.Module):
     def __init__(self, in_channels, num_classes):
-        super(InceptionAux, self).__init__()
+        super().__init__()
         self.conv0 = BasicConv2d(in_channels, 128, kernel_size=1)
         self.conv1 = BasicConv2d(128, 768, kernel_size=5)
         self.conv1.stddev = 0.01
@@ -326,7 +326,7 @@ class InceptionAux(nn.Module):
 
 class BasicConv2d(nn.Module):
     def __init__(self, in_channels, out_channels, **kwargs):
-        super(BasicConv2d, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, bias=False, **kwargs)
         self.bn = nn.BatchNorm2d(out_channels, eps=0.001)
 

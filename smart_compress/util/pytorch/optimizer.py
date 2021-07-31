@@ -35,9 +35,7 @@ class OptimLP(Optimizer):
         momentum_quant=None,
         acc_quant=None,
     ):
-        super(OptimLP, self).__init__(
-            optim.param_groups, optim.defaults
-        )  # place holder
+        super().__init__(optim.param_groups, optim.defaults)  # place holder
 
         # python dictionary does not copy by default
         self.param_groups = optim.param_groups

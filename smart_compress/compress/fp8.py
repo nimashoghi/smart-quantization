@@ -22,7 +22,7 @@ class FP8(CompressionAlgorithmBase):
         return parser
 
     def __init__(self, hparams: Namespace):
-        super(FP8, self).__init__(hparams)
+        super().__init__(hparams)
 
     @torch.no_grad()
     def __call__(self, tensor: torch.Tensor, tag: str = None, **_):

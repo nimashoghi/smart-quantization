@@ -60,7 +60,7 @@ class GLUEDataModule(LightningDataModule):
         return parser
 
     def __init__(self, hparams):
-        super(GLUEDataModule, self).__init__()
+        super().__init__()
 
         self.hparams = hparams
         self.hparams.num_labels = self.glue_task_num_labels[self.hparams.task_name]
